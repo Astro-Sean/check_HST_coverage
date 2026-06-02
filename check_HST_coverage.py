@@ -146,9 +146,9 @@ def check_hst_coverage(ra, dec, radius=0.1):
     
     return df
 
-def download_hst_images(obs_table, output_dir="hst_images", max_images=5):
+def download_hst_images(obs_table, output_dir="hst_images", max_images=1):
     """Download HST products using astroquery."""
-    print(f"\nDownloading HST products (max {max_images} observations)...")
+    print(f"\nDownloading HST products (max {max_images} files)...")
     print("="*60)
     
     # obs_table is already a DataFrame from check_hst_coverage
@@ -180,6 +180,9 @@ def download_hst_images(obs_table, output_dir="hst_images", max_images=5):
         if len(science_products) == 0:
             print("No science products found. Downloading all products...")
             science_products = products
+        
+        # Limit to max_images products (not observations)
+        science_products = science_products[:max_images]
         
         print(f"Downloading {len(science_products)} products...")
         
