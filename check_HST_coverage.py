@@ -515,7 +515,8 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             info_text = f'HST {instrument} | {filter_name} | {formatted_date}'
             fig.suptitle(info_text, fontsize=16, y=0.98)
             
-            plt.tight_layout()
+            # Adjust layout to prevent label overlap
+            plt.tight_layout(rect=[0, 0, 1, 0.96])
             plt.savefig(output_file, dpi=150, bbox_inches='tight')
             print(f"Plot saved to: {output_file}")
             plt.close()
