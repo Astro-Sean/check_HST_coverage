@@ -407,24 +407,55 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 dra_arcsec = (ra_array - center_ra) * 3600.0 * np.cos(np.radians(center_dec))
                 ddec_arcsec = (dec_array - center_dec) * 3600.0
                 
-                # Set tick positions and labels centered on 0
-                # Use a reasonable number of ticks, ensuring center is included
-                n_ticks = 5
-                # Create tick positions including the center
-                x_tick_indices = np.linspace(0, nx-1, n_ticks, dtype=int)
-                y_tick_indices = np.linspace(0, ny-1, n_ticks, dtype=int)
+                # Set tick positions and labels with nice round values
+                # Get the range of arcsecond values
+                x_min_arcsec = dra_arcsec[ny//2, 0]
+                x_max_arcsec = dra_arcsec[ny//2, -1]
+                y_min_arcsec = ddec_arcsec[0, nx//2]
+                y_max_arcsec = ddec_arcsec[-1, nx//2]
                 
-                # Ensure center is in the tick positions
-                if nx//2 not in x_tick_indices:
-                    x_tick_indices = np.append(x_tick_indices, nx//2)
-                    x_tick_indices = np.sort(x_tick_indices)
-                if ny//2 not in y_tick_indices:
-                    y_tick_indices = np.append(y_tick_indices, ny//2)
-                    y_tick_indices = np.sort(y_tick_indices)
+                # Create evenly spaced tick values including 0
+                def nice_ticks(min_val, max_val, n_ticks=5):
+                    """Generate nice round tick values centered on 0."""
+                    # Always include 0
+                    ticks = [0.0]
+                    
+                    # Add positive ticks
+                    if max_val > 0:
+                        pos_ticks = np.linspace(0, max_val, n_ticks//2 + 1)[1:]
+                        ticks.extend(pos_ticks)
+                    
+                    # Add negative ticks
+                    if min_val < 0:
+                        neg_ticks = np.linspace(0, min_val, n_ticks//2 + 1)[1:]
+                        ticks.extend(neg_ticks)
+                    
+                    # Sort and round to reasonable precision
+                    ticks = np.sort(ticks)
+                    ticks = np.round(ticks, 1)
+                    return ticks
                 
-                # Get tick values from middle row (for x-axis) and middle column (for y-axis)
-                x_tick_values = dra_arcsec[ny//2, x_tick_indices]
-                y_tick_values = ddec_arcsec[y_tick_indices, nx//2]
+                x_tick_values = nice_ticks(x_min_arcsec, x_max_arcsec, 5)
+                y_tick_values = nice_ticks(y_min_arcsec, y_max_arcsec, 5)
+                
+                # Find pixel positions corresponding to these tick values
+                def find_pixel_positions(tick_values, arcsec_array, axis):
+                    """Find pixel indices for given tick values."""
+                    positions = []
+                    for tick in tick_values:
+                        # Find the pixel closest to this tick value
+                        if axis == 'x':
+                            # For x-axis, use middle row
+                            diff = np.abs(arcsec_array[ny//2, :] - tick)
+                        else:
+                            # For y-axis, use middle column
+                            diff = np.abs(arcsec_array[:, nx//2] - tick)
+                        pos = np.argmin(diff)
+                        positions.append(pos)
+                    return positions
+                
+                x_tick_indices = find_pixel_positions(x_tick_values, dra_arcsec, 'x')
+                y_tick_indices = find_pixel_positions(y_tick_values, ddec_arcsec, 'y')
                 
                 ax2.set_xticks(x_tick_indices)
                 ax2.set_yticks(y_tick_indices)
