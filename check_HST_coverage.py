@@ -293,54 +293,6 @@ def download_hst_images(obs_table, output_dir="hst_images", max_images=1, file_t
         print(f"{'='*100}")
         return []
 
-def zscale(image, samples=1000, contrast=0.25):
-    """Implement zscale scaling similar to DS9/IRAF.
-    
-    This matches the DS9 zscale algorithm which uses a linear fit
-    to the sorted pixel values to determine optimal contrast limits.
-    """
-    import numpy as np
-    
-    # Flatten image and remove NaN/Inf
-    flat = image.flatten()
-    flat = flat[np.isfinite(flat)]
-    
-    if len(flat) == 0:
-        return 0, 1
-    
-    # Sample pixels
-    if len(flat) > samples:
-        indices = np.random.choice(len(flat), samples, replace=False)
-        flat = flat[indices]
-    
-    # Sort
-    flat = np.sort(flat)
-    n = len(flat)
-    
-    # Calculate midpoint (median)
-    median = np.median(flat)
-    
-    # Calculate sigma using linear fit (DS9 method)
-    # Use the middle 50% of pixels for the fit
-    q1 = int(n * 0.25)
-    q3 = int(n * 0.75)
-    middle_pixels = flat[q1:q3]
-    middle_indices = np.arange(q1, q3)
-    
-    if len(middle_pixels) > 1:
-        # Linear fit to get slope
-        slope, intercept = np.polyfit(middle_indices, middle_pixels, 1)
-        sigma = slope
-    else:
-        # Fallback to MAD if not enough pixels
-        mad = np.median(np.abs(flat - median))
-        sigma = 1.4826 * mad
-    
-    # Calculate z1 and z2
-    z1 = median - contrast * sigma
-    z2 = median + contrast * sigma
-    
-    return z1, z2
 
 def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, target_dec=None):
     """Create a two-panel plot from downloaded HST FITS images."""
@@ -366,8 +318,10 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             from astropy.wcs import WCS
             wcs = WCS(hdul[1].header)
             
-            # Apply zscale scaling
-            z1, z2 = zscale(data)
+            # Apply zscale scaling using astropy
+            from astropy.visualization import ZScaleInterval
+            zscale_interval = ZScaleInterval()
+            z1, z2 = zscale_interval.get_limits(data)
             
             # Create figure with WCSAxes for proper coordinate display
             from astropy.visualization.wcsaxes import WCSAxes
@@ -422,8 +376,9 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 
                 cutout = data[y_min:y_max, x_min:x_max]
                 
-                # Display cutout
-                z1_cut, z2_cut = zscale(cutout)
+                # Display cutout with zscale
+                zscale_interval_cut = ZScaleInterval()
+                z1_cut, z2_cut = zscale_interval_cut.get_limits(cutout)
                 im2 = ax2.imshow(cutout, origin='lower', cmap='viridis', vmin=z1_cut, vmax=z2_cut)
                 ax2.set_title(f'5 arcsec Cutout', fontsize=14)
                 ax2.set_xlabel('Pixels', fontsize=12)
