@@ -381,15 +381,49 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 z1_cut, z2_cut = zscale_interval_cut.get_limits(cutout)
                 im2 = ax2.imshow(cutout, origin='lower', cmap='viridis', vmin=z1_cut, vmax=z2_cut)
                 ax2.set_title(f'5 arcsec Cutout', fontsize=14)
-                ax2.set_xlabel('Pixels', fontsize=12)
-                ax2.set_ylabel('Pixels', fontsize=12)
                 
-                # Add crosshair at center of cutout
+                # Calculate RA/DEC offsets for axes in arcseconds
+                import numpy as np
+                ny, nx = cutout.shape
+                
+                # Create coordinate grids for the cutout
+                y_indices, x_indices = np.indices((ny, nx))
+                # Convert to image coordinates
+                x_img = x_indices + x_min
+                y_img = y_indices + y_min
+                
+                # Convert to world coordinates
+                from astropy.coordinates import SkyCoord
+                from astropy import units as u
+                world_coords = wcs.pixel_to_world(x_img.flatten(), y_img.flatten())
+                ra_array = world_coords.ra.deg.reshape(ny, nx)
+                dec_array = world_coords.dec.deg.reshape(ny, nx)
+                
+                # Calculate offsets from target in arcseconds
+                dra_arcsec = (ra_array - target_ra) * 3600.0 * np.cos(np.radians(target_dec))
+                ddec_arcsec = (dec_array - target_dec) * 3600.0
+                
+                # Set tick positions and labels
+                # Use a reasonable number of ticks
+                n_ticks = 5
+                x_tick_indices = np.linspace(0, nx-1, n_ticks, dtype=int)
+                y_tick_indices = np.linspace(0, ny-1, n_ticks, dtype=int)
+                
+                # Get tick values from middle row (for x-axis) and middle column (for y-axis)
+                x_tick_values = dra_arcsec[ny//2, x_tick_indices]
+                y_tick_values = ddec_arcsec[y_tick_indices, nx//2]
+                
+                ax2.set_xticks(x_tick_indices)
+                ax2.set_yticks(y_tick_indices)
+                ax2.set_xticklabels([f'{x:.1f}' for x in x_tick_values])
+                ax2.set_yticklabels([f'{y:.1f}' for y in y_tick_values])
+                ax2.set_xlabel('ΔRA (arcsec)', fontsize=12)
+                ax2.set_ylabel('ΔDEC (arcsec)', fontsize=12)
+                
+                # Add hollow circle at center
                 center_x = cutout.shape[1] / 2
                 center_y = cutout.shape[0] / 2
-                ax2.axvline(center_x, color='red', linestyle='--', linewidth=1, alpha=0.7)
-                ax2.axhline(center_y, color='red', linestyle='--', linewidth=1, alpha=0.7)
-                ax2.plot(center_x, center_y, 'r+', markersize=15, markeredgewidth=2)
+                ax2.plot(center_x, center_y, 'ro', markersize=10, markeredgewidth=2, fillstyle='none')
                 
                 plt.colorbar(im2, ax=ax2, fraction=0.046, pad=0.04)
             else:
