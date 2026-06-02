@@ -519,6 +519,11 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             plt.tight_layout(rect=[0, 0, 1, 0.96])
             plt.savefig(output_file, dpi=150, bbox_inches='tight')
             print(f"Plot saved to: {output_file}")
+            
+            # Verify file was created
+            if os.path.exists(output_file):
+                file_size = os.path.getsize(output_file) / 1024  # KB
+                print(f"  File size: {file_size:.1f} KB")
             plt.close()
             
     except Exception as e:
@@ -572,7 +577,13 @@ def main():
             
             # Plot images if requested
             if args.plot and downloaded_files:
-                plot_hst_images(downloaded_files, output_file=os.path.join(output_dir, "hst_mosaic.png"), 
+                # Generate descriptive filename
+                if args.tns:
+                    base_name = args.tns.replace(' ', '_').replace('/', '_')
+                else:
+                    base_name = f"RA{ra:.4f}_DEC{dec:.4f}"
+                plot_filename = f"{base_name}_HST_preview.png"
+                plot_hst_images(downloaded_files, output_file=os.path.join(output_dir, plot_filename), 
                                target_ra=ra, target_dec=dec)
             elif args.plot:
                 print("\nNo images downloaded, skipping plot.")
