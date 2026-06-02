@@ -79,6 +79,7 @@ python3 check_HST_coverage.py --ra 335.784417 --dec -28.947889 --download --plot
 --max-images N            # Maximum number of images to download (default: 1)
 --file-type TYPE          # File type to download: flt, drz, crj (default: flt)
 --output-dir DIR          # Output directory for downloads
+--clean-cosmic-rays       # Clean cosmic rays using ccdproc (requires: pip install ccdproc)
 ```
 
 ## Example: SN 2009ip
@@ -218,6 +219,25 @@ Available file types:
 ```bash
 python3 check_HST_coverage.py --tns "SN 2009ip" --download --file-type drz --max-images 3
 ```
+
+### 5. Clean Cosmic Rays
+
+For FLT files, you can clean cosmic rays using the LA Cosmic algorithm via ccdproc:
+
+```bash
+# Install ccdproc first
+pip install ccdproc
+
+# Then run with cosmic ray cleaning
+python3 check_HST_coverage.py --tns "SN 2009ip" --download --plot --file-type flt --clean-cosmic-rays
+```
+
+The tool automatically reads the FITS header to determine optimal parameters:
+- **GAIN**: From header (electrons/ADU)
+- **READNOISE**: From header (electrons)
+- **EXPTIME**: From header (seconds)
+
+This ensures the cosmic ray cleaning is tailored to the specific HST instrument and exposure settings.
 
 ## Troubleshooting
 

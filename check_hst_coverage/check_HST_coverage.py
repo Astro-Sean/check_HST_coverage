@@ -302,7 +302,7 @@ def download_hst_images(obs_table, output_dir="hst_images", max_images=1, file_t
         return []
 
 
-def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, target_dec=None):
+def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, target_dec=None, clean_cosmic_rays=False):
     """Create a two-panel plot from downloaded HST FITS images."""
     print(f"\nCreating plot from {len(image_files)} images...")
     print("="*60)
@@ -325,6 +325,40 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             # Get WCS information from science extension
             from astropy.wcs import WCS
             wcs = WCS(hdul[1].header)
+            
+            # Clean cosmic rays if requested
+            if clean_cosmic_rays:
+                try:
+                    from ccdproc import cosmicray_lacosmic
+                    import numpy as np
+                    
+                    # Get parameters from header for informed selection
+                    gain = header.get('GAIN', 1.0)  # electrons/ADU
+                    readnoise = header.get('READNOISE', 5.0)  # electrons
+                    exptime = header.get('EXPTIME', 1.0)  # seconds
+                    
+                    print(f"  Cleaning cosmic rays (gain={gain}, readnoise={readnoise}, exptime={exptime})...")
+                    
+                    # Run LA Cosmic with header-informed parameters
+                    cr_cleaned_data, cr_mask = cosmicray_lacosmic(
+                        data,
+                        gain=gain,
+                        readnoise=readnoise,
+                        sigclip=5.0,
+                        sigfrac=0.3,
+                        objlim=5.0,
+                        satlevel=65535.0,
+                        niter=4
+                    )
+                    
+                    data = cr_cleaned_data
+                    print(f"  Cosmic ray cleaning complete")
+                except ImportError:
+                    print("  Warning: ccdproc not installed. Skipping cosmic ray cleaning.")
+                    print("  Install with: pip install ccdproc")
+                except Exception as e:
+                    print(f"  Warning: Cosmic ray cleaning failed: {e}")
+                    print("  Continuing with original data")
             
             # Apply zscale scaling using astropy
             from astropy.visualization import ZScaleInterval
@@ -574,6 +608,7 @@ def main():
     parser.add_argument('--max-images', type=int, default=1, help='Maximum number of images to download (default: 1)')
     parser.add_argument('--file-type', type=str, default='flt', help='File type to download (default: flt, options: flt, drz, crj, etc.)')
     parser.add_argument('--output-dir', type=str, default='hst_images', help='Output directory for images (default: hst_images)')
+    parser.add_argument('--clean-cosmic-rays', action='store_true', help='Clean cosmic rays using ccdproc (requires ccdproc installation)')
     
     args = parser.parse_args()
     
@@ -649,7 +684,8 @@ def main():
                             plot_path = os.path.join(subfolder_path, plot_filename)
                             
                             plot_hst_images([img_file], output_file=plot_path, 
-                                           target_ra=ra, target_dec=dec)
+                                           target_ra=ra, target_dec=dec, 
+                                           clean_cosmic_rays=args.clean_cosmic_rays)
                     except Exception as e:
                         print(f"Error processing {img_file}: {e}")
                         continue
