@@ -35,6 +35,56 @@ def resolve_tns_name(tns_name):
         print(f"Error resolving TNS name: {e}")
         return None, None
 
+def point_in_polygon(ra, dec, s_region):
+    """Check if a point (ra, dec) is within the polygon defined by s_region."""
+    try:
+        # Parse s_region (format: "POLYGON ICRS ra1 dec1 ra2 dec2 ...")
+        if not s_region or s_region == '--':
+            return False
+        
+        parts = s_region.split()
+        if parts[0] != 'POLYGON' or len(parts) < 4:
+            return False
+        
+        # Extract coordinates (skip "POLYGON" and coordinate system like "ICRS")
+        start_idx = 2 if len(parts) > 2 and parts[1].upper() in ['ICRS', 'J2000'] else 1
+        coords = []
+        for i in range(start_idx, len(parts), 2):
+            if i + 1 < len(parts):
+                try:
+                    ra_coord = float(parts[i])
+                    dec_coord = float(parts[i + 1])
+                    coords.append((ra_coord, dec_coord))
+                except (ValueError, IndexError):
+                    continue
+        
+        if len(coords) < 3:
+            return False
+        
+        # Ray casting algorithm for point-in-polygon
+        n = len(coords)
+        inside = False
+        
+        x, y = ra, dec
+        p1x, p1y = coords[0]
+        
+        for i in range(n + 1):
+            p2x, p2y = coords[i % n]
+            
+            if y > min(p1y, p2y):
+                if y <= max(p1y, p2y):
+                    if x <= max(p1x, p2x):
+                        if p1y != p2y:
+                            xinters = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+                        if p1x == p2x or x <= xinters:
+                            inside = not inside
+            p1x, p1y = p2x, p2y
+        
+        return inside
+    except Exception as e:
+        print(f"Error parsing s_region: {e}")
+        return False
+
 def check_hst_coverage(ra, dec, radius=0.1):
     """Check for HST observations at given coordinates."""
     print(f"\nSearching for HST observations at RA={ra:.6f}, DEC={dec:.6f}")
@@ -58,6 +108,20 @@ def check_hst_coverage(ra, dec, radius=0.1):
     # Convert to pandas for easier handling
     df = hst_obs.to_pandas()
     
+    # Filter for observations where target is within the image footprint
+    print("\nFiltering for observations that overlap with target coordinates...")
+    df['overlaps'] = df.apply(lambda row: point_in_polygon(ra, dec, row.get('s_region', '--')), axis=1)
+    df_overlap = df[df['overlaps'] == True]
+    
+    print(f"Observations overlapping target: {len(df_overlap)}")
+    
+    if len(df_overlap) == 0:
+        print("\nNo HST observations overlap with target coordinates.")
+        print("Showing all observations in search radius instead:")
+        df_overlap = df
+    else:
+        df = df_overlap
+    
     # Display relevant information
     print(f"\n{'='*80}")
     print(f"{'Instrument':<15} {'Filter':<20} {'Obs ID':<20} {'RA':<12} {'DEC':<12}")
@@ -78,7 +142,7 @@ def check_hst_coverage(ra, dec, radius=0.1):
     print(f"\nSummary:")
     print(f"  Unique instruments: {df['instrument_name'].nunique()}")
     print(f"  Unique filters: {df['filters'].nunique()}")
-    print(f"  Total HST observations: {len(hst_obs)}")
+    print(f"  Total HST observations: {len(df)}")
     
     return df
 
@@ -208,7 +272,7 @@ def main():
     parser.add_argument('--radius', type=float, default=0.1, help='Search radius in degrees (default: 0.1)')
     parser.add_argument('--download', action='store_true', help='Download HST images')
     parser.add_argument('--plot', action='store_true', help='Create plot from downloaded images')
-    parser.add_argument('--max-images', type=int, default=5, help='Maximum number of images to download (default: 5)')
+    parser.add_argument('--max-images', type=int, default=1, help='Maximum number of images to download (default: 1)')
     parser.add_argument('--output-dir', type=str, default='hst_images', help='Output directory for images (default: hst_images)')
     
     args = parser.parse_args()
