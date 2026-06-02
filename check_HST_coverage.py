@@ -343,11 +343,12 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
         with fits.open(img_file) as hdul:
             # Get the science data extension (usually extension 1)
             data = hdul[1].data
-            header = hdul[1].header
+            # Get metadata from primary header (extension 0)
+            header = hdul[0].header
             
-            # Get WCS information
+            # Get WCS information from science extension
             from astropy.wcs import WCS
-            wcs = WCS(header)
+            wcs = WCS(hdul[1].header)
             
             # Apply zscale scaling
             z1, z2 = zscale(data)
