@@ -414,29 +414,17 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 y_min_arcsec = ddec_arcsec[0, nx//2]
                 y_max_arcsec = ddec_arcsec[-1, nx//2]
                 
-                # Create evenly spaced tick values including 0
-                def nice_ticks(min_val, max_val, n_ticks=5):
-                    """Generate nice round tick values centered on 0."""
-                    # Always include 0
-                    ticks = [0.0]
-                    
-                    # Add positive ticks
-                    if max_val > 0:
-                        pos_ticks = np.linspace(0, max_val, n_ticks//2 + 1)[1:]
-                        ticks.extend(pos_ticks)
-                    
-                    # Add negative ticks
-                    if min_val < 0:
-                        neg_ticks = np.linspace(0, min_val, n_ticks//2 + 1)[1:]
-                        ticks.extend(neg_ticks)
-                    
-                    # Sort and round to reasonable precision
-                    ticks = np.sort(ticks)
-                    ticks = np.round(ticks, 1)
+                # Create tick values at 1 arcsec intervals centered on 0
+                def nice_ticks(min_val, max_val):
+                    """Generate tick values at 1 arcsec intervals centered on 0."""
+                    # Generate ticks from floor(min) to ceil(max) at 1 arcsec steps
+                    tick_min = np.floor(min_val)
+                    tick_max = np.ceil(max_val)
+                    ticks = np.arange(tick_min, tick_max + 1, 1.0)
                     return ticks
                 
-                x_tick_values = nice_ticks(x_min_arcsec, x_max_arcsec, 5)
-                y_tick_values = nice_ticks(y_min_arcsec, y_max_arcsec, 5)
+                x_tick_values = nice_ticks(x_min_arcsec, x_max_arcsec)
+                y_tick_values = nice_ticks(y_min_arcsec, y_max_arcsec)
                 
                 # Find pixel positions corresponding to these tick values
                 def find_pixel_positions(tick_values, arcsec_array, axis):
