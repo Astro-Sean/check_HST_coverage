@@ -108,6 +108,14 @@ def check_hst_coverage(ra, dec, radius=0.1):
     # Convert to pandas for easier handling
     df = hst_obs.to_pandas()
     
+    # Sort by observation date (oldest first)
+    if 't_obs_start' in df.columns:
+        df = df.sort_values('t_obs_start', ascending=True)
+        print(f"\nSorting observations by date (oldest first)...")
+    elif 't_min' in df.columns:
+        df = df.sort_values('t_min', ascending=True)
+        print(f"\nSorting observations by date (oldest first)...")
+    
     # Filter for observations where target is within the image footprint
     print("\nFiltering for observations that overlap with target coordinates...")
     df['overlaps'] = df.apply(lambda row: point_in_polygon(ra, dec, row.get('s_region', '--')), axis=1)
