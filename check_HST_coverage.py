@@ -353,14 +353,21 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             # Apply zscale scaling
             z1, z2 = zscale(data)
             
-            # Create figure with two panels
-            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 7))
+            # Create figure with WCSAxes for proper coordinate display
+            from astropy.visualization.wcsaxes import WCSAxes
+            fig = plt.figure(figsize=(16, 7))
             
-            # Left panel: Full image
+            # Left panel: Full image with WCS
+            ax1 = fig.add_subplot(1, 2, 1, projection=wcs)
             im1 = ax1.imshow(data, origin='lower', cmap='viridis', vmin=z1, vmax=z2)
             ax1.set_title('Full Image', fontsize=14)
-            ax1.set_xlabel('RA (deg)', fontsize=12)
-            ax1.set_ylabel('DEC (deg)', fontsize=12)
+            ax1.grid(color='white', linestyle=':', linewidth=0.5, alpha=0.5)
+            
+            # Format RA/DEC labels
+            ax1.coords['ra'].set_axislabel('RA', fontsize=12)
+            ax1.coords['dec'].set_axislabel('DEC', fontsize=12)
+            ax1.coords['ra'].format_unit = 'deg'
+            ax1.coords['dec'].format_unit = 'deg'
             
             # Add crosshair at target coordinates if provided
             if target_ra is not None and target_dec is not None:
@@ -375,6 +382,7 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             plt.colorbar(im1, ax=ax1, fraction=0.046, pad=0.04)
             
             # Right panel: 5 arcsec cutout
+            ax2 = fig.add_subplot(1, 2, 2)
             if target_ra is not None and target_dec is not None:
                 # Convert 5 arcsec to degrees
                 cutout_radius_deg = 5.0 / 3600.0  # 5 arcsec in degrees
