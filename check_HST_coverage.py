@@ -403,11 +403,20 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 dra_arcsec = (ra_array - target_ra) * 3600.0 * np.cos(np.radians(target_dec))
                 ddec_arcsec = (dec_array - target_dec) * 3600.0
                 
-                # Set tick positions and labels
-                # Use a reasonable number of ticks
+                # Set tick positions and labels centered on 0
+                # Use a reasonable number of ticks, ensuring center is included
                 n_ticks = 5
+                # Create tick positions including the center
                 x_tick_indices = np.linspace(0, nx-1, n_ticks, dtype=int)
                 y_tick_indices = np.linspace(0, ny-1, n_ticks, dtype=int)
+                
+                # Ensure center is in the tick positions
+                if nx//2 not in x_tick_indices:
+                    x_tick_indices = np.append(x_tick_indices, nx//2)
+                    x_tick_indices = np.sort(x_tick_indices)
+                if ny//2 not in y_tick_indices:
+                    y_tick_indices = np.append(y_tick_indices, ny//2)
+                    y_tick_indices = np.sort(y_tick_indices)
                 
                 # Get tick values from middle row (for x-axis) and middle column (for y-axis)
                 x_tick_values = dra_arcsec[ny//2, x_tick_indices]
@@ -421,9 +430,31 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 ax2.set_ylabel('ΔDEC (arcsec)', fontsize=12)
                 
                 # Add hollow circle at center
+                # Check for FWHM in header, otherwise use default
+                fwhm = None
+                for key in header.keys():
+                    if key and 'FWHM' in key.upper():
+                        fwhm = header[key]
+                        break
+                
                 center_x = cutout.shape[1] / 2
                 center_y = cutout.shape[0] / 2
-                ax2.plot(center_x, center_y, 'ro', markersize=10, markeredgewidth=2, fillstyle='none')
+                
+                if fwhm is not None and fwhm > 0:
+                    # Scale circle to 1.7 * FWHM
+                    # Convert FWHM (presumably in arcsec) to pixels
+                    if 'CDELT1' in header and 'CDELT2' in header:
+                        pixel_scale = abs(header['CDELT1']) * 3600.0  # arcsec per pixel
+                        circle_radius_pix = (1.7 * fwhm) / pixel_scale
+                        # Convert to markersize (roughly proportional to diameter in points)
+                        markersize = circle_radius_pix * 2
+                    else:
+                        markersize = 10  # default
+                else:
+                    # Default circle size
+                    markersize = 10
+                
+                ax2.plot(center_x, center_y, 'ro', markersize=markersize, markeredgewidth=2, fillstyle='none')
                 
                 plt.colorbar(im2, ax=ax2, fraction=0.046, pad=0.04)
             else:
