@@ -146,9 +146,16 @@ def check_hst_coverage(ra, dec, radius=0.1):
     
     return df
 
-def download_hst_images(obs_table, output_dir="hst_images", max_images=1):
-    """Download HST products using astroquery."""
-    print(f"\nDownloading HST products (max {max_images} files)...")
+def download_hst_images(obs_table, output_dir="hst_images", max_images=1, file_type="drz"):
+    """Download HST products using astroquery.
+    
+    Args:
+        obs_table: DataFrame of HST observations
+        output_dir: Directory to save downloaded files
+        max_images: Maximum number of files to download
+        file_type: File type to download (default: 'drz' for drizzle-combined images)
+    """
+    print(f"\nDownloading HST products (max {max_images} files, type: {file_type.upper()})...")
     print("="*60)
     
     # obs_table is already a DataFrame from check_hst_coverage
@@ -165,7 +172,7 @@ def download_hst_images(obs_table, output_dir="hst_images", max_images=1):
     
     # Convert back to astropy Table for astroquery
     from astropy.table import Table
-    obs_table_subset = Table.from_pandas(df_with_data.head(max_images))
+    obs_table_subset = Table.from_pandas(df_with_data.head(max_images * 3))  # Get more obs to find DRZ files
     
     try:
         # Get product list
@@ -181,7 +188,22 @@ def download_hst_images(obs_table, output_dir="hst_images", max_images=1):
             print("No science products found. Downloading all products...")
             science_products = products
         
-        # Limit to max_images products (not observations)
+        # Filter by file type (e.g., drz, flt, raw)
+        file_type_lower = file_type.lower()
+        if 'productFilename' in science_products.colnames:
+            mask = [fname.lower().endswith(f'_{file_type_lower}.fits') for fname in science_products['productFilename']]
+            filtered_products = science_products[mask]
+            
+            if len(filtered_products) == 0:
+                print(f"No {file_type.upper()} files found. Falling back to first available science product...")
+                filtered_products = science_products[:1]
+            else:
+                print(f"Found {len(filtered_products)} {file_type.upper()} files")
+                science_products = filtered_products
+        else:
+            print("Warning: productFilename column not found, downloading all science products")
+        
+        # Limit to max_images products
         science_products = science_products[:max_images]
         
         print(f"Downloading {len(science_products)} products...")
@@ -194,13 +216,62 @@ def download_hst_images(obs_table, output_dir="hst_images", max_images=1):
         )
         
         downloaded_files = []
-        for _, row in manifest.iterrows():
-            if row['Status'] == 'COMPLETE':
-                downloaded_files.append(row['Local Path'])
-                print(f"Downloaded: {os.path.basename(row['Local Path'])}")
+        # Handle manifest - it could be a pandas DataFrame or astropy Table
+        try:
+            if hasattr(manifest, 'iterrows'):
+                for index, row in manifest.iterrows():
+                    if row['Status'] == 'COMPLETE':
+                        local_path = row['Local Path']
+                        downloaded_files.append(local_path)
+                        print(f"Downloaded: {os.path.basename(local_path)}")
+            elif hasattr(manifest, '__iter__'):
+                for row in manifest:
+                    if row['Status'] == 'COMPLETE':
+                        local_path = row['Local Path']
+                        downloaded_files.append(local_path)
+                        print(f"Downloaded: {os.path.basename(local_path)}")
+            else:
+                print(f"Manifest type: {type(manifest)}")
+                print(f"Manifest: {manifest}")
+        except Exception as e:
+            print(f"Error processing manifest: {e}")
+            # Fallback: check for files in the download directory matching file type
+            import glob
+            pattern = f"**/*_{file_type}.fits"
+            fits_files = glob.glob(os.path.join(output_dir, pattern), recursive=True)
+            # Sort by modification time to get most recent downloads
+            fits_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+            # Limit to max_images
+            downloaded_files = fits_files[:max_images]
+            for f in downloaded_files:
+                print(f"Found file: {os.path.basename(f)}")
         
-        print(f"\nSuccessfully downloaded {len(downloaded_files)} files to {output_dir}")
-        return downloaded_files
+        # Clean up file paths - move files to output directory root
+        cleaned_files = []
+        for filepath in downloaded_files:
+            if os.path.exists(filepath):
+                # Extract filename
+                filename = os.path.basename(filepath)
+                # New path in output directory root
+                new_path = os.path.join(output_dir, filename)
+                
+                # Move if not already in root
+                if filepath != new_path:
+                    import shutil
+                    shutil.move(filepath, new_path)
+                    # Clean up empty directories
+                    old_dir = os.path.dirname(filepath)
+                    while old_dir != output_dir and os.path.exists(old_dir):
+                        try:
+                            os.rmdir(old_dir)
+                            old_dir = os.path.dirname(old_dir)
+                        except OSError:
+                            break
+                
+                cleaned_files.append(new_path)
+        
+        print(f"\nSuccessfully downloaded {len(cleaned_files)} files to {output_dir}")
+        return cleaned_files
         
     except Exception as e:
         print(f"Error downloading products: {e}")
@@ -223,15 +294,13 @@ def download_hst_images(obs_table, output_dir="hst_images", max_images=1):
         return []
 
 def plot_hst_images(image_files, output_file="hst_mosaic.png"):
-    """Create a plot from downloaded HST JPEG images."""
+    """Create a plot from downloaded HST FITS images."""
     print(f"\nCreating plot from {len(image_files)} images...")
     print("="*60)
     
     if len(image_files) == 0:
         print("No images to plot.")
         return
-    
-    from PIL import Image
     
     # Determine grid size
     n_images = min(len(image_files), 9)  # Max 3x3 grid
@@ -248,10 +317,16 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png"):
     
     for i, img_file in enumerate(image_files[:n_images]):
         try:
-            img = Image.open(img_file)
-            axes[i].imshow(img)
-            axes[i].set_title(os.path.basename(img_file))
-            axes[i].axis('off')
+            # Read FITS file
+            with fits.open(img_file) as hdul:
+                # Get the science data extension (usually extension 1)
+                data = hdul[1].data
+                
+                # Display the data
+                im = axes[i].imshow(data, origin='lower', cmap='viridis')
+                plt.colorbar(im, ax=axes[i])
+                axes[i].set_title(os.path.basename(img_file))
+                axes[i].axis('off')
         except Exception as e:
             print(f"Error reading {img_file}: {e}")
             axes[i].text(0.5, 0.5, 'Error', ha='center', va='center')
@@ -276,6 +351,7 @@ def main():
     parser.add_argument('--download', action='store_true', help='Download HST images')
     parser.add_argument('--plot', action='store_true', help='Create plot from downloaded images')
     parser.add_argument('--max-images', type=int, default=1, help='Maximum number of images to download (default: 1)')
+    parser.add_argument('--file-type', type=str, default='drz', help='File type to download (default: drz, options: drz, flt, raw, etc.)')
     parser.add_argument('--output-dir', type=str, default='hst_images', help='Output directory for images (default: hst_images)')
     
     args = parser.parse_args()
@@ -307,7 +383,7 @@ def main():
         
         # Download images if requested
         if args.download:
-            downloaded_files = download_hst_images(result, output_dir=output_dir, max_images=args.max_images)
+            downloaded_files = download_hst_images(result, output_dir=output_dir, max_images=args.max_images, file_type=args.file_type)
             
             # Plot images if requested
             if args.plot and downloaded_files:
