@@ -294,8 +294,11 @@ def download_hst_images(obs_table, output_dir="hst_images", max_images=1, file_t
         return []
 
 def zscale(image, samples=1000, contrast=0.25):
-    """Implement zscale scaling similar to IRAF."""
-    from scipy import stats
+    """Implement zscale scaling similar to DS9/IRAF.
+    
+    This matches the DS9 zscale algorithm which uses a linear fit
+    to the sorted pixel values to determine optimal contrast limits.
+    """
     import numpy as np
     
     # Flatten image and remove NaN/Inf
@@ -312,13 +315,26 @@ def zscale(image, samples=1000, contrast=0.25):
     
     # Sort
     flat = np.sort(flat)
+    n = len(flat)
     
-    # Calculate midpoint
+    # Calculate midpoint (median)
     median = np.median(flat)
     
-    # Calculate sigma using MAD
-    mad = np.median(np.abs(flat - median))
-    sigma = 1.4826 * mad
+    # Calculate sigma using linear fit (DS9 method)
+    # Use the middle 50% of pixels for the fit
+    q1 = int(n * 0.25)
+    q3 = int(n * 0.75)
+    middle_pixels = flat[q1:q3]
+    middle_indices = np.arange(q1, q3)
+    
+    if len(middle_pixels) > 1:
+        # Linear fit to get slope
+        slope, intercept = np.polyfit(middle_indices, middle_pixels, 1)
+        sigma = slope
+    else:
+        # Fallback to MAD if not enough pixels
+        mad = np.median(np.abs(flat - median))
+        sigma = 1.4826 * mad
     
     # Calculate z1 and z2
     z1 = median - contrast * sigma
