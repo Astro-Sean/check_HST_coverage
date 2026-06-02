@@ -293,8 +293,41 @@ def download_hst_images(obs_table, output_dir="hst_images", max_images=1, file_t
         print(f"{'='*100}")
         return []
 
-def plot_hst_images(image_files, output_file="hst_mosaic.png"):
-    """Create a plot from downloaded HST FITS images."""
+def zscale(image, samples=1000, contrast=0.25):
+    """Implement zscale scaling similar to IRAF."""
+    from scipy import stats
+    import numpy as np
+    
+    # Flatten image and remove NaN/Inf
+    flat = image.flatten()
+    flat = flat[np.isfinite(flat)]
+    
+    if len(flat) == 0:
+        return 0, 1
+    
+    # Sample pixels
+    if len(flat) > samples:
+        indices = np.random.choice(len(flat), samples, replace=False)
+        flat = flat[indices]
+    
+    # Sort
+    flat = np.sort(flat)
+    
+    # Calculate midpoint
+    median = np.median(flat)
+    
+    # Calculate sigma using MAD
+    mad = np.median(np.abs(flat - median))
+    sigma = 1.4826 * mad
+    
+    # Calculate z1 and z2
+    z1 = median - contrast * sigma
+    z2 = median + contrast * sigma
+    
+    return z1, z2
+
+def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, target_dec=None):
+    """Create a two-panel plot from downloaded HST FITS images."""
     print(f"\nCreating plot from {len(image_files)} images...")
     print("="*60)
     
@@ -302,44 +335,117 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png"):
         print("No images to plot.")
         return
     
-    # Determine grid size
-    n_images = min(len(image_files), 9)  # Max 3x3 grid
-    n_cols = min(3, n_images)
-    n_rows = (n_images + n_cols - 1) // n_cols
+    # Plot first image only
+    img_file = image_files[0]
     
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(12, 4*n_rows))
-    if n_images == 1:
-        axes = [axes]
-    elif n_rows == 1:
-        axes = [axes]
-    else:
-        axes = axes.flatten()
-    
-    for i, img_file in enumerate(image_files[:n_images]):
-        try:
-            # Read FITS file
-            with fits.open(img_file) as hdul:
-                # Get the science data extension (usually extension 1)
-                data = hdul[1].data
+    try:
+        # Read FITS file
+        with fits.open(img_file) as hdul:
+            # Get the science data extension (usually extension 1)
+            data = hdul[1].data
+            header = hdul[1].header
+            
+            # Get WCS information
+            from astropy.wcs import WCS
+            wcs = WCS(header)
+            
+            # Apply zscale scaling
+            z1, z2 = zscale(data)
+            
+            # Create figure with two panels
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 7))
+            
+            # Left panel: Full image
+            im1 = ax1.imshow(data, origin='lower', cmap='viridis', vmin=z1, vmax=z2)
+            ax1.set_title('Full Image', fontsize=14)
+            ax1.set_xlabel('RA (deg)', fontsize=12)
+            ax1.set_ylabel('DEC (deg)', fontsize=12)
+            
+            # Add crosshair at target coordinates if provided
+            if target_ra is not None and target_dec is not None:
+                # Convert RA/DEC to pixel coordinates
+                x_target, y_target = wcs.world_to_pixel_values(target_ra, target_dec)
                 
-                # Display the data
-                im = axes[i].imshow(data, origin='lower', cmap='viridis')
-                plt.colorbar(im, ax=axes[i])
-                axes[i].set_title(os.path.basename(img_file))
-                axes[i].axis('off')
-        except Exception as e:
-            print(f"Error reading {img_file}: {e}")
-            axes[i].text(0.5, 0.5, 'Error', ha='center', va='center')
-            axes[i].axis('off')
-    
-    # Hide unused subplots
-    for i in range(n_images, len(axes)):
-        axes[i].axis('off')
-    
-    plt.tight_layout()
-    plt.savefig(output_file, dpi=150, bbox_inches='tight')
-    print(f"Plot saved to: {output_file}")
-    plt.close()
+                # Draw crosshair
+                ax1.axvline(x_target, color='red', linestyle='--', linewidth=1, alpha=0.7)
+                ax1.axhline(y_target, color='red', linestyle='--', linewidth=1, alpha=0.7)
+                ax1.plot(x_target, y_target, 'r+', markersize=15, markeredgewidth=2)
+            
+            plt.colorbar(im1, ax=ax1, fraction=0.046, pad=0.04)
+            
+            # Right panel: 5 arcsec cutout
+            if target_ra is not None and target_dec is not None:
+                # Convert 5 arcsec to degrees
+                cutout_radius_deg = 5.0 / 3600.0  # 5 arcsec in degrees
+                
+                # Get pixel coordinates of target
+                x_target, y_target = wcs.world_to_pixel_values(target_ra, target_dec)
+                
+                # Convert cutout radius to pixels using pixel scale
+                if 'CDELT1' in header and 'CDELT2' in header:
+                    pixel_scale = abs(header['CDELT1'])  # degrees per pixel
+                    cutout_radius_pix = cutout_radius_deg / pixel_scale
+                else:
+                    # Default: assume ~0.1 arcsec/pixel for HST
+                    cutout_radius_pix = 5.0 / 0.1  # 50 pixels
+                
+                # Extract cutout
+                x_min = int(max(0, x_target - cutout_radius_pix))
+                x_max = int(min(data.shape[1], x_target + cutout_radius_pix))
+                y_min = int(max(0, y_target - cutout_radius_pix))
+                y_max = int(min(data.shape[0], y_target + cutout_radius_pix))
+                
+                cutout = data[y_min:y_max, x_min:x_max]
+                
+                # Display cutout
+                z1_cut, z2_cut = zscale(cutout)
+                im2 = ax2.imshow(cutout, origin='lower', cmap='viridis', vmin=z1_cut, vmax=z2_cut)
+                ax2.set_title(f'5 arcsec Cutout', fontsize=14)
+                ax2.set_xlabel('Pixels', fontsize=12)
+                ax2.set_ylabel('Pixels', fontsize=12)
+                
+                # Add crosshair at center of cutout
+                center_x = cutout.shape[1] / 2
+                center_y = cutout.shape[0] / 2
+                ax2.axvline(center_x, color='red', linestyle='--', linewidth=1, alpha=0.7)
+                ax2.axhline(center_y, color='red', linestyle='--', linewidth=1, alpha=0.7)
+                ax2.plot(center_x, center_y, 'r+', markersize=15, markeredgewidth=2)
+                
+                plt.colorbar(im2, ax=ax2, fraction=0.046, pad=0.04)
+            else:
+                ax2.text(0.5, 0.5, 'Target coordinates\nnot provided', ha='center', va='center', 
+                         transform=ax2.transAxes, fontsize=14)
+                ax2.axis('off')
+            
+            # Add observation info to the plot
+            obs_date = header.get('DATE-OBS', 'Unknown')
+            filter_name = header.get('FILTER', 'Unknown')
+            instrument = header.get('INSTRUME', 'Unknown')
+            
+            # Format date
+            try:
+                from datetime import datetime
+                if obs_date != 'Unknown':
+                    dt = datetime.strptime(obs_date, '%Y-%m-%d')
+                    formatted_date = dt.strftime('%d %B %Y')
+                else:
+                    formatted_date = 'Unknown'
+            except:
+                formatted_date = obs_date
+            
+            # Add info text
+            info_text = f'HST {instrument} | {filter_name} | {formatted_date}'
+            fig.suptitle(info_text, fontsize=16, y=0.98)
+            
+            plt.tight_layout()
+            plt.savefig(output_file, dpi=150, bbox_inches='tight')
+            print(f"Plot saved to: {output_file}")
+            plt.close()
+            
+    except Exception as e:
+        print(f"Error reading {img_file}: {e}")
+        import traceback
+        traceback.print_exc()
 
 def main():
     parser = argparse.ArgumentParser(description='Check for HST coverage at a given position')
@@ -387,7 +493,8 @@ def main():
             
             # Plot images if requested
             if args.plot and downloaded_files:
-                plot_hst_images(downloaded_files, output_file=os.path.join(output_dir, "hst_mosaic.png"))
+                plot_hst_images(downloaded_files, output_file=os.path.join(output_dir, "hst_mosaic.png"), 
+                               target_ra=ra, target_dec=dec)
             elif args.plot:
                 print("\nNo images downloaded, skipping plot.")
     else:
