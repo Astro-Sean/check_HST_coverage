@@ -577,14 +577,51 @@ def main():
             
             # Plot images if requested
             if args.plot and downloaded_files:
-                # Generate descriptive filename
-                if args.tns:
-                    base_name = args.tns.replace(' ', '_').replace('/', '_')
-                else:
-                    base_name = f"RA{ra:.4f}_DEC{dec:.4f}"
-                plot_filename = f"{base_name}_HST_preview.png"
-                plot_hst_images(downloaded_files, output_file=os.path.join(output_dir, plot_filename), 
-                               target_ra=ra, target_dec=dec)
+                for img_file in downloaded_files:
+                    # Read header to get filter and date
+                    try:
+                        with fits.open(img_file) as hdul:
+                            header = hdul[0].header
+                            filter_name = header.get('FILTER', 'Unknown')
+                            obs_date = header.get('DATE-OBS', 'Unknown')
+                            
+                            # Format date for folder name
+                            if obs_date != 'Unknown':
+                                try:
+                                    from datetime import datetime
+                                    dt = datetime.strptime(obs_date, '%Y-%m-%d')
+                                    date_str = dt.strftime('%Y%m%d')
+                                except:
+                                    date_str = obs_date.replace('-', '')
+                            else:
+                                date_str = 'Unknown'
+                            
+                            # Create subfolder name
+                            subfolder_name = f"{filter_name}_{date_str}"
+                            subfolder_path = os.path.join(output_dir, subfolder_name)
+                            os.makedirs(subfolder_path, exist_ok=True)
+                            
+                            # Get base filename without extension
+                            base_fits_name = os.path.basename(img_file)
+                            base_name = os.path.splitext(base_fits_name)[0]
+                            
+                            # Move FITS file to subfolder if not already there
+                            new_fits_path = os.path.join(subfolder_path, base_fits_name)
+                            if img_file != new_fits_path and not os.path.exists(new_fits_path):
+                                import shutil
+                                shutil.move(img_file, new_fits_path)
+                                print(f"Moved {base_fits_name} to {subfolder_name}/")
+                                img_file = new_fits_path
+                            
+                            # Create PNG with same name as FITS file
+                            plot_filename = f"{base_name}.png"
+                            plot_path = os.path.join(subfolder_path, plot_filename)
+                            
+                            plot_hst_images([img_file], output_file=plot_path, 
+                                           target_ra=ra, target_dec=dec)
+                    except Exception as e:
+                        print(f"Error processing {img_file}: {e}")
+                        continue
             elif args.plot:
                 print("\nNo images downloaded, skipping plot.")
     else:
