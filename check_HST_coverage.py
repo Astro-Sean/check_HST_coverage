@@ -449,6 +449,12 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 x_tick_indices = find_pixel_positions(x_tick_values, dra_arcsec, 'x')
                 y_tick_indices = find_pixel_positions(y_tick_values, ddec_arcsec, 'y')
                 
+                # Sort tick indices and corresponding values together to ensure proper ordering
+                x_sorted = sorted(zip(x_tick_indices, x_tick_values))
+                y_sorted = sorted(zip(y_tick_indices, y_tick_values))
+                x_tick_indices, x_tick_values = zip(*x_sorted) if x_sorted else ([], [])
+                y_tick_indices, y_tick_values = zip(*y_sorted) if y_sorted else ([], [])
+                
                 ax2.set_xticks(x_tick_indices)
                 ax2.set_yticks(y_tick_indices)
                 ax2.set_xticklabels([f'{x:.1f}' for x in x_tick_values])
