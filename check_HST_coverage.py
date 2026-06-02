@@ -414,6 +414,10 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 y_min_arcsec = ddec_arcsec[0, nx//2]
                 y_max_arcsec = ddec_arcsec[-1, nx//2]
                 
+                # Ensure min < max for proper tick generation
+                x_min_arcsec, x_max_arcsec = min(x_min_arcsec, x_max_arcsec), max(x_min_arcsec, x_max_arcsec)
+                y_min_arcsec, y_max_arcsec = min(y_min_arcsec, y_max_arcsec), max(y_min_arcsec, y_max_arcsec)
+                
                 # Create tick values at 1 arcsec intervals centered on 0
                 def nice_ticks(min_val, max_val):
                     """Generate tick values at 1 arcsec intervals centered on 0."""
