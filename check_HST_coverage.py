@@ -399,9 +399,13 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 ra_array = world_coords.ra.deg.reshape(ny, nx)
                 dec_array = world_coords.dec.deg.reshape(ny, nx)
                 
-                # Calculate offsets from target in arcseconds
-                dra_arcsec = (ra_array - target_ra) * 3600.0 * np.cos(np.radians(target_dec))
-                ddec_arcsec = (dec_array - target_dec) * 3600.0
+                # Get RA/DEC at the center of the cutout (this should be the target position)
+                center_ra = ra_array[ny//2, nx//2]
+                center_dec = dec_array[ny//2, nx//2]
+                
+                # Calculate offsets from cutout center in arcseconds
+                dra_arcsec = (ra_array - center_ra) * 3600.0 * np.cos(np.radians(center_dec))
+                ddec_arcsec = (dec_array - center_dec) * 3600.0
                 
                 # Set tick positions and labels centered on 0
                 # Use a reasonable number of ticks, ensuring center is included
