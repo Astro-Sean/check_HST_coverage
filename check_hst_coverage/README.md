@@ -118,17 +118,18 @@ ACS/WFC         F814W                hst_10565_09_acs_wfc_f814w_ickj02 335.78441
 
 HST coverage found! 46 observations available.
 
-Downloading HST products (max 1 files, type: DRZ)...
+Downloading HST products (max 1 files, type: FLT)...
 ============================================================
 Found 46 observations with data products
-Found 6 DRZ files
+Found 133 products
+Found 8 FLT files
 Downloading 1 products...
-Moved hst_6359_40_wfpc2_pc_f606w_u3324002_drz.fits to F606W_19990629/
+Moved u3324001r_flt.fits to F606W_19990629/   # or Unknown_19990629/
 
 Creating plot from 1 images...
 ============================================================
-Plot saved to: SN_2009ip/F555W_20150523/ickj02ggq_drz.png
-  File size: 1367.5 KB
+Plot saved to: SN_2009ip/F606W_19990629/u3324001r_flt.png
+  File size: 1069.6 KB
 ```
 
 ### Directory Structure
@@ -138,11 +139,16 @@ After running, you'll have:
 ```
 SN_2009ip/
 └── F606W_19990629/              # Oldest observation (June 29, 1999)
-    ├── hst_6359_40_wfpc2_pc_f606w_u3324002_drz.fits   # Science-ready HST image
-    └── hst_6359_40_wfpc2_pc_f606w_u3324002_drz.png    # Preview plot
+    ├── u3324001r_flt.fits       # Flat-fielded HST image (individual exposure)
+    └── u3324001r_flt.png        # Preview plot
 ```
 
-**Note**: The tool now sorts observations by date (oldest first), so the earliest HST observation of SN 2009ip is downloaded - a 1999 WFPC2 image from before the star's major outbursts.
+**Note**: The tool now:
+- Downloads FLT files by default (individual exposures for time-series analysis)
+- Sorts observations by date (oldest first)
+- Organizes files into `{FILTER}_{YYYYMMDD}/` subfolders
+
+For science-ready drizzled images, use `--file-type drz`.
 
 ### Example Output Plot
 

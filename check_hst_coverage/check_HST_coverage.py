@@ -348,20 +348,29 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             ax1.coords['dec'].format_unit = 'deg'
             
             # Add crosshair at target coordinates if provided
+            target_in_bounds = False
             if target_ra is not None and target_dec is not None:
                 # Convert RA/DEC to pixel coordinates
                 x_target, y_target = wcs.world_to_pixel_values(target_ra, target_dec)
                 
-                # Draw crosshair
-                ax1.axvline(x_target, color='red', linestyle='--', linewidth=1, alpha=0.7)
-                ax1.axhline(y_target, color='red', linestyle='--', linewidth=1, alpha=0.7)
-                ax1.plot(x_target, y_target, 'r+', markersize=15, markeredgewidth=2)
+                # Check if target is within the detector bounds
+                ny, nx = data.shape
+                if 0 <= x_target < nx and 0 <= y_target < ny:
+                    target_in_bounds = True
+                    # Draw crosshair
+                    ax1.axvline(x_target, color='red', linestyle='--', linewidth=1, alpha=0.7)
+                    ax1.axhline(y_target, color='red', linestyle='--', linewidth=1, alpha=0.7)
+                    ax1.plot(x_target, y_target, 'r+', markersize=15, markeredgewidth=2)
+                else:
+                    print(f"Warning: Target coordinates ({target_ra:.6f}, {target_dec:.6f}) fall outside the image bounds.")
+                    print(f"  Pixel coordinates: ({x_target:.1f}, {y_target:.1f}) outside [0:{nx}, 0:{ny}]")
+                    ax1.set_title('Full Image (Target outside bounds)', fontsize=14, color='red')
             
             plt.colorbar(im1, ax=ax1, fraction=0.046, pad=0.04)
             
-            # Right panel: 5 arcsec cutout
+            # Right panel: 5 arcsec cutout (only if target is within bounds)
             ax2 = fig.add_subplot(1, 2, 2)
-            if target_ra is not None and target_dec is not None:
+            if target_ra is not None and target_dec is not None and target_in_bounds:
                 # Convert 5 arcsec to degrees
                 cutout_radius_deg = 5.0 / 3600.0  # 5 arcsec in degrees
                 
@@ -498,6 +507,13 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 ax2.plot(center_x, center_y, 'ro', markersize=markersize, markeredgewidth=2, fillstyle='none')
                 
                 plt.colorbar(im2, ax=ax2, fraction=0.046, pad=0.04)
+            elif target_ra is not None and target_dec is not None:
+                # Target outside bounds - show message in right panel
+                ax2.text(0.5, 0.5, 'Target outside\nimage bounds', 
+                        ha='center', va='center', transform=ax2.transAxes, 
+                        fontsize=14, color='red')
+                ax2.set_title('Cutout unavailable', fontsize=14, color='red')
+                ax2.axis('off')
             else:
                 ax2.text(0.5, 0.5, 'Target coordinates\nnot provided', ha='center', va='center', 
                          transform=ax2.transAxes, fontsize=14)
@@ -525,13 +541,20 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             
             # Adjust layout to prevent label overlap
             plt.tight_layout(rect=[0, 0, 1, 0.96])
-            plt.savefig(output_file, dpi=150, bbox_inches='tight')
-            print(f"Plot saved to: {output_file}")
             
-            # Verify file was created
-            if os.path.exists(output_file):
-                file_size = os.path.getsize(output_file) / 1024  # KB
-                print(f"  File size: {file_size:.1f} KB")
+            # Only save plot if target is within bounds
+            if target_in_bounds or target_ra is None or target_dec is None:
+                plt.savefig(output_file, dpi=150, bbox_inches='tight')
+                print(f"Plot saved to: {output_file}")
+                
+                # Verify file was created
+                if os.path.exists(output_file):
+                    file_size = os.path.getsize(output_file) / 1024  # KB
+                    print(f"  File size: {file_size:.1f} KB")
+            else:
+                print(f"Skipping plot save: Target outside image bounds")
+                plt.close()
+                return
             plt.close()
             
     except Exception as e:
