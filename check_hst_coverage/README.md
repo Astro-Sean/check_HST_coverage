@@ -86,8 +86,10 @@ python3 check_HST_coverage.py --ra 335.784417 --dec -28.947889 --download --plot
 SN 2009ip is a well-known Luminous Blue Variable (LBV) star in NGC 7259. Let's check what HST data is available:
 
 ```bash
-python3 check_HST_coverage.py --tns "SN 2009ip" --download --plot
+python3 check_HST_coverage.py --tns "SN 2009ip" --download --plot --file-type drz
 ```
+
+**Note**: We use `--file-type drz` for science-ready drizzled images. FLT files (default) are for time-series analysis but may have target-out-of-bounds issues for some observations.
 
 ### Expected Output
 
@@ -118,18 +120,30 @@ ACS/WFC         F814W                hst_10565_09_acs_wfc_f814w_ickj02 335.78441
 
 HST coverage found! 46 observations available.
 
-Downloading HST products (max 1 files, type: FLT)...
+Downloading HST products (max 5 files, type: DRZ)...
 ============================================================
 Found 46 observations with data products
-Found 133 products
-Found 8 FLT files
-Downloading 1 products...
-Moved u3324001r_flt.fits to F606W_19990629/   # or Unknown_19990629/
+Found 645 products
+Found 14 DRZ files
+Downloading 5 products...
+Moved ickj01elq_drz.fits to F275W_20150525/
 
 Creating plot from 1 images...
 ============================================================
-Plot saved to: SN_2009ip/F606W_19990629/u3324001r_flt.png
-  File size: 1069.6 KB
+Plot saved to: SN_2009ip/F275W_20150525/ickj01elq_drz.png
+  File size: 1631.4 KB
+Moved ickj02ggq_drz.fits to F555W_20150523/
+
+Creating plot from 1 images...
+============================================================
+Plot saved to: SN_2009ip/F555W_20150523/ickj02ggq_drz.png
+  File size: 1367.5 KB
+Moved ickj02gfq_drz.fits to F814W_20150523/
+
+Creating plot from 1 images...
+============================================================
+Plot saved to: SN_2009ip/F814W_20150523/ickj02gfq_drz.png
+  File size: 1348.4 KB
 ```
 
 ### Directory Structure
@@ -138,17 +152,22 @@ After running, you'll have:
 
 ```
 SN_2009ip/
-└── F606W_19990629/              # Oldest observation (June 29, 1999)
-    ├── u3324001r_flt.fits       # Flat-fielded HST image (individual exposure)
-    └── u3324001r_flt.png        # Preview plot
+├── F275W_20150525/
+│   ├── ickj01elq_drz.fits   # Science-ready HST image
+│   └── ickj01elq_drz.png    # Preview plot
+├── F555W_20150523/
+│   ├── ickj02ggq_drz.fits   # Science-ready HST image
+│   └── ickj02ggq_drz.png    # Preview plot
+└── F814W_20150523/
+    ├── ickj02gfq_drz.fits   # Science-ready HST image
+    └── ickj02gfq_drz.png    # Preview plot
 ```
 
-**Note**: The tool now:
-- Downloads FLT files by default (individual exposures for time-series analysis)
+**Note**: The tool:
 - Sorts observations by date (oldest first)
 - Organizes files into `{FILTER}_{YYYYMMDD}/` subfolders
-
-For science-ready drizzled images, use `--file-type drz`.
+- Skips plot generation if target is outside detector bounds
+- DRZ files are recommended for plotting; FLT files (default) are for time-series analysis
 
 ### Example Output Plot
 
