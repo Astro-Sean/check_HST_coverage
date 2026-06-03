@@ -483,8 +483,13 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 y_tick_arcsec = nice_ticks(*y_arcsec_range)
                 
                 # Convert arcsec tick values to pixel positions via linear interpolation
-                x_tick_pix = np.interp(x_tick_arcsec, [dra_row[0], dra_row[-1]], [0, nx - 1])
-                y_tick_pix = np.interp(y_tick_arcsec, [ddec_col[0], ddec_col[-1]], [0, ny - 1])
+                # np.interp requires xp to be increasing, so sort by arcsec value
+                x_tick_pix = np.interp(x_tick_arcsec,
+                                       sorted([dra_row[0], dra_row[-1]]),
+                                       [0, nx - 1] if dra_row[0] < dra_row[-1] else [nx - 1, 0])
+                y_tick_pix = np.interp(y_tick_arcsec,
+                                       sorted([ddec_col[0], ddec_col[-1]]),
+                                       [0, ny - 1] if ddec_col[0] < ddec_col[-1] else [ny - 1, 0])
                 
                 # Set ticks and labels
                 ax2.set_xticks(x_tick_pix)
