@@ -463,59 +463,37 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 dra_arcsec = (ra_array - center_ra) * 3600.0 * np.cos(np.radians(center_dec))
                 ddec_arcsec = (dec_array - center_dec) * 3600.0
                 
-                # Set tick positions and labels with nice round values
-                # Get the range of arcsecond values
-                x_min_arcsec = dra_arcsec[ny//2, 0]
-                x_max_arcsec = dra_arcsec[ny//2, -1]
-                y_min_arcsec = ddec_arcsec[0, nx//2]
-                y_max_arcsec = ddec_arcsec[-1, nx//2]
+                # Map arcsec values to pixel positions using linear interpolation
+                # dra_arcsec at middle row: pixel 0 -> left edge, pixel nx-1 -> right edge
+                dra_row = dra_arcsec[ny//2, :]        # shape (nx,): arcsec at each x pixel
+                ddec_col = ddec_arcsec[:, nx//2]      # shape (ny,): arcsec at each y pixel
                 
-                # Ensure min < max for proper tick generation
-                x_min_arcsec, x_max_arcsec = min(x_min_arcsec, x_max_arcsec), max(x_min_arcsec, x_max_arcsec)
-                y_min_arcsec, y_max_arcsec = min(y_min_arcsec, y_max_arcsec), max(y_min_arcsec, y_max_arcsec)
+                # Pixel arrays (0-indexed)
+                x_pixels = np.arange(nx, dtype=float)
+                y_pixels = np.arange(ny, dtype=float)
                 
-                # Create tick values at 1 arcsec intervals
-                def nice_ticks(min_val, max_val):
-                    """Generate tick values at 1 arcsec intervals."""
-                    # Generate ticks from floor(min) to ceil(max) at 1 arcsec steps
-                    tick_min = np.floor(min_val)
-                    tick_max = np.ceil(max_val)
-                    ticks = np.arange(tick_min, tick_max + 1, 1.0)
-                    return ticks
+                # Arcsec range (in pixel order, may be reversed for RA)
+                x_arcsec_range = (dra_row[0], dra_row[-1])
+                y_arcsec_range = (ddec_col[0], ddec_col[-1])
                 
-                x_tick_values = nice_ticks(x_min_arcsec, x_max_arcsec)
-                y_tick_values = nice_ticks(y_min_arcsec, y_max_arcsec)
+                # Create tick values at 1 arcsec intervals within the actual range
+                def nice_ticks(arcsec_start, arcsec_end):
+                    """Generate tick values at 1 arcsec steps within the given range."""
+                    lo, hi = min(arcsec_start, arcsec_end), max(arcsec_start, arcsec_end)
+                    return np.arange(np.ceil(lo), np.floor(hi) + 1, 1.0)
                 
-                # Find pixel positions corresponding to these tick values
-                def find_pixel_positions(tick_values, arcsec_array, axis):
-                    """Find pixel indices for given tick values."""
-                    positions = []
-                    for tick in tick_values:
-                        # Find the pixel closest to this tick value
-                        if axis == 'x':
-                            # For x-axis, use middle row
-                            diff = np.abs(arcsec_array[ny//2, :] - tick)
-                        else:
-                            # For y-axis, use middle column
-                            diff = np.abs(arcsec_array[:, nx//2] - tick)
-                        pos = np.argmin(diff)
-                        positions.append(pos)
-                    return positions
+                x_tick_arcsec = nice_ticks(*x_arcsec_range)
+                y_tick_arcsec = nice_ticks(*y_arcsec_range)
                 
-                x_tick_indices = find_pixel_positions(x_tick_values, dra_arcsec, 'x')
-                y_tick_indices = find_pixel_positions(y_tick_values, ddec_arcsec, 'y')
-                
-                # Sort tick indices and corresponding values together to ensure proper ordering
-                x_sorted = sorted(zip(x_tick_indices, x_tick_values))
-                y_sorted = sorted(zip(y_tick_indices, y_tick_values))
-                x_tick_indices, x_tick_values = zip(*x_sorted) if x_sorted else ([], [])
-                y_tick_indices, y_tick_values = zip(*y_sorted) if y_sorted else ([], [])
+                # Convert arcsec tick values to pixel positions via linear interpolation
+                x_tick_pix = np.interp(x_tick_arcsec, [dra_row[0], dra_row[-1]], [0, nx - 1])
+                y_tick_pix = np.interp(y_tick_arcsec, [ddec_col[0], ddec_col[-1]], [0, ny - 1])
                 
                 # Set ticks and labels
-                ax2.set_xticks(x_tick_indices)
-                ax2.set_yticks(y_tick_indices)
-                ax2.set_xticklabels([f'{x:.1f}' for x in x_tick_values])
-                ax2.set_yticklabels([f'{y:.1f}' for y in y_tick_values])
+                ax2.set_xticks(x_tick_pix)
+                ax2.set_yticks(y_tick_pix)
+                ax2.set_xticklabels([f'{x:.1f}' for x in x_tick_arcsec])
+                ax2.set_yticklabels([f'{y:.1f}' for y in y_tick_arcsec])
                 ax2.set_xlabel('ΔRA (arcsec)', fontsize=12)
                 ax2.set_ylabel('ΔDEC (arcsec)', fontsize=12)
                 
