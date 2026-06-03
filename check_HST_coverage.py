@@ -400,7 +400,7 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             ax1.coords['ra'].set_ticklabel(size=10)
             ax1.coords['dec'].set_ticklabel(size=10)
             
-            # Add crosshair at target coordinates if provided
+            # Check if target is within bounds for cutout
             target_in_bounds = False
             if target_ra is not None and target_dec is not None:
                 # Convert RA/DEC to pixel coordinates
@@ -410,17 +410,17 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 ny, nx = data.shape
                 if 0 <= x_target < nx and 0 <= y_target < ny:
                     target_in_bounds = True
-                    # Draw crosshair
-                    ax1.axvline(x_target, color='red', linestyle='--', linewidth=1, alpha=0.7)
-                    ax1.axhline(y_target, color='red', linestyle='--', linewidth=1, alpha=0.7)
-                    ax1.plot(x_target, y_target, 'r+', markersize=15, markeredgewidth=2)
                 else:
                     print(f"Warning: Target coordinates ({target_ra:.6f}, {target_dec:.6f}) fall outside the image bounds.")
                     print(f"  Pixel coordinates: ({x_target:.1f}, {y_target:.1f}) outside [0:{nx}, 0:{ny}]")
-                    ax1.text(0.5, 0.01, 'Target outside image bounds', ha='center', va='bottom',
-                             transform=ax1.transAxes, fontsize=10, color='red')
             
-            plt.colorbar(im1, ax=ax1, fraction=0.046, pad=0.04)
+            # Add colorbar with units from header
+            bunit = header.get('BUNIT', '')
+            if bunit:
+                label = f'Intensity ({bunit})'
+            else:
+                label = 'Intensity'
+            plt.colorbar(im1, ax=ax1, fraction=0.046, pad=0.04, label=label)
             
             # Inset axes in top-right corner: 5 arcsec wide (2.5 arcsec radius) cutout
             from mpl_toolkits.axes_grid1.inset_locator import inset_axes
