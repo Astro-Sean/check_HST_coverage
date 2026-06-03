@@ -430,7 +430,13 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 cutout_radius_deg = 2.5 / 3600.0
                 
                 # Get pixel coordinates of target
-                x_target, y_target = wcs.world_to_pixel_values(target_ra, target_dec)
+                # Use all_world2pix for higher accuracy with distortion models
+                try:
+                    # Try using the full SIP distortion model if available
+                    x_target, y_target = wcs.all_world2pix(target_ra, target_dec, 0)
+                except:
+                    # Fall back to basic WCS transformation
+                    x_target, y_target = wcs.world_to_pixel_values(target_ra, target_dec)
                 
                 # Convert cutout radius to pixels using pixel scale derived from WCS
                 import astropy.units as u
