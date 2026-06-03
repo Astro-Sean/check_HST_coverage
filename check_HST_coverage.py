@@ -410,13 +410,10 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 # Get pixel coordinates of target
                 x_target, y_target = wcs.world_to_pixel_values(target_ra, target_dec)
                 
-                # Convert cutout radius to pixels using pixel scale
-                if 'CDELT1' in header and 'CDELT2' in header:
-                    pixel_scale = abs(header['CDELT1'])  # degrees per pixel
-                    cutout_radius_pix = cutout_radius_deg / pixel_scale
-                else:
-                    # Default: assume ~0.1 arcsec/pixel for HST
-                    cutout_radius_pix = 5.0 / 0.1  # 50 pixels
+                # Convert cutout radius to pixels using pixel scale derived from WCS
+                import astropy.units as u
+                pixel_scale_deg = wcs.proj_plane_pixel_scales()[0].to(u.deg).value
+                cutout_radius_pix = cutout_radius_deg / pixel_scale_deg
                 
                 # Extract cutout
                 x_min = int(max(0, x_target - cutout_radius_pix))
@@ -515,13 +512,9 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 if fwhm is not None and fwhm > 0:
                     # Scale circle to 1.7 * FWHM
                     # Convert FWHM (presumably in arcsec) to pixels
-                    if 'CDELT1' in header and 'CDELT2' in header:
-                        pixel_scale = abs(header['CDELT1']) * 3600.0  # arcsec per pixel
-                        circle_radius_pix = (1.7 * fwhm) / pixel_scale
-                        # Convert to markersize (roughly proportional to diameter in points)
-                        markersize = circle_radius_pix * 2
-                    else:
-                        markersize = 10  # default
+                    pixel_scale_arcsec = pixel_scale_deg * 3600.0  # arcsec per pixel
+                    circle_radius_pix = (1.7 * fwhm) / pixel_scale_arcsec
+                    markersize = circle_radius_pix * 2
                 else:
                     # Default circle size
                     markersize = 10
