@@ -587,20 +587,20 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             
             # Add compass rose in bottom-right showing North and East (red)
             # Use axes fraction coordinates for reliable positioning
-            compass_x, compass_y = 0.95, 0.05  # bottom-right in axes fraction
-            arrow_len = 0.06  # length in axes fraction
+            compass_x, compass_y = 0.90, 0.08  # bottom-right in axes fraction (avoiding inset)
+            arrow_len = 0.10  # length in axes fraction (larger)
             
             # Draw North arrow (pointing up in axes coordinates)
             ax1.annotate('N', xy=(compass_x, compass_y + arrow_len), xytext=(compass_x, compass_y),
                         xycoords='axes fraction', textcoords='axes fraction',
-                        arrowprops=dict(arrowstyle='->', color='red', lw=3),
-                        ha='center', va='bottom', color='red', fontsize=14, fontweight='bold', zorder=300)
+                        arrowprops=dict(arrowstyle='->', color='red', lw=0.5),
+                        ha='center', va='bottom', color='red', fontsize=18, fontweight='bold', zorder=300)
             
             # Draw East arrow (pointing right in axes coordinates)
             ax1.annotate('E', xy=(compass_x + arrow_len, compass_y), xytext=(compass_x, compass_y),
                         xycoords='axes fraction', textcoords='axes fraction',
-                        arrowprops=dict(arrowstyle='->', color='red', lw=3),
-                        ha='left', va='center', color='red', fontsize=14, fontweight='bold', zorder=300)
+                        arrowprops=dict(arrowstyle='->', color='red', lw=0.5),
+                        ha='left', va='center', color='red', fontsize=18, fontweight='bold', zorder=300)
             
             # Adjust layout
             plt.tight_layout()
