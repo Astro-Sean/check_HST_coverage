@@ -527,6 +527,11 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 ax2.yaxis.tick_right()
                 ax2.yaxis.set_label_position('right')
                 
+                # Set spine colors to red
+                for spine in ax2.spines.values():
+                    spine.set_edgecolor('red')
+                    spine.set_linewidth(1.5)
+                
                 # Set axis limits to match the cutout
                 ax2.set_xlim(-0.5, nx - 0.5)
                 ax2.set_ylim(-0.5, ny - 0.5)
