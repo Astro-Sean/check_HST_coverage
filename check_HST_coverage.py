@@ -525,7 +525,6 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 ax2.set_yticklabels([f'{y:.1f}' for y in y_tick_arcsec])
                 ax2.set_xlabel('Δα (")', fontsize=8, color='red')
                 ax2.set_ylabel('Δδ (")', fontsize=8, color='red')
-                ax2.tick_params(labelsize=7)
                 
                 # Move x-axis to top and y-axis to right to avoid connector overlap
                 ax2.xaxis.tick_top()
@@ -538,8 +537,8 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                     spine.set_edgecolor('red')
                     spine.set_linewidth(1.5)
                 
-                # Set tick colors and labels to red
-                ax2.tick_params(axis='both', colors='red', labelcolor='red')
+                # Set tick colors and labels to red (must come after axis position changes)
+                ax2.tick_params(axis='both', colors='red', labelcolor='red', labelsize=7)
                 
                 # Set axis limits to match the cutout
                 ax2.set_xlim(-0.5, nx - 0.5)
