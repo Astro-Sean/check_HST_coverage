@@ -48,10 +48,10 @@ pip install astropy astroquery matplotlib numpy astroscrappy
 
 ### Basic Usage with TNS Name
 
-Check HST coverage for a named object (e.g., SN 2009ip):
+Check HST coverage for a named object (e.g., 2016jbu):
 
 ```bash
-python3 check_HST_coverage.py --tns "SN 2009ip"
+python3 check_HST_coverage.py --tns "2016jbu"
 ```
 
 ### Download and Plot
@@ -59,7 +59,7 @@ python3 check_HST_coverage.py --tns "SN 2009ip"
 To download images and generate preview plots:
 
 ```bash
-python3 check_HST_coverage.py --tns "SN 2009ip" --download --plot
+python3 check_HST_coverage.py --tns "2016jbu" --download --plot
 ```
 
 ### Using Coordinates Directly
@@ -85,12 +85,12 @@ python3 check_HST_coverage.py --ra 335.784417 --dec -28.947889 --download --plot
 --clean-cosmic-rays       # Clean cosmic rays using astroscrappy (requires: pip install astroscrappy)
 ```
 
-## Example: SN 2009ip
+## Example: 2016jbu
 
-SN 2009ip is a well-known Luminous Blue Variable (LBV) star in NGC 7259. Let's check what HST data is available:
+SN 2016jbu is a supernova in NGC 2442. Let's check what HST data is available:
 
 ```bash
-python3 check_HST_coverage.py --tns "SN 2009ip" --download --plot --file-type drz
+python3 check_HST_coverage.py --tns "2016jbu" --download --plot --file-type drz
 ```
 
 **Note**: We use `--file-type drz` for science-ready drizzled images. FLT files (default) are for time-series analysis but may have target-out-of-bounds issues for some observations.
@@ -99,11 +99,11 @@ python3 check_HST_coverage.py --tns "SN 2009ip" --download --plot --file-type dr
 
 **Console Output:**
 ```
-Resolved TNS name 'SN 2009ip' to RA=335.784417, DEC=-28.947889
-Output directory: SN_2009ip
+Resolved TNS name '2016jbu' to RA=112.895833, DEC=-69.058333
+Output directory: 2016jbu
 Sorting observations by date (oldest first)...
 
-Searching for HST observations at RA=335.784417, DEC=-28.947889
+Searching for HST observations at RA=112.895833, DEC=-69.058333
 Search radius: 0.1 deg
 ============================================================
 
@@ -126,27 +126,27 @@ HST coverage found! 46 observations available.
 
 Downloading HST products (max 5 files, type: DRZ)...
 ============================================================
-Found 46 observations with data products
-Found 645 products
-Found 14 DRZ files
-Downloading 5 products...
-Moved ickj01elq_drz.fits to F275W_20150525/
+Found 5 observations with data products
+Found 15 products
+Found 3 DRZ files
+Downloading 3 products...
+Moved image1_drz.fits to F555W_20160405/
 
 Creating plot from 1 images...
 ============================================================
-Plot saved to: SN_2009ip/F275W_20150525/ickj01elq_drz.png
+Plot saved to: 2016jbu/F555W_20160405/image1_drz.png
   File size: 1631.4 KB
-Moved ickj02ggq_drz.fits to F555W_20150523/
+Moved image2_drz.fits to F814W_20160403/
 
 Creating plot from 1 images...
 ============================================================
-Plot saved to: SN_2009ip/F555W_20150523/ickj02ggq_drz.png
+Plot saved to: 2016jbu/F814W_20160403/image2_drz.png
   File size: 1367.5 KB
-Moved ickj02gfq_drz.fits to F814W_20150523/
+Moved image3_drz.fits to F435W_20160403/
 
 Creating plot from 1 images...
 ============================================================
-Plot saved to: SN_2009ip/F814W_20150523/ickj02gfq_drz.png
+Plot saved to: 2016jbu/F435W_20160403/image3_drz.png
   File size: 1348.4 KB
 ```
 
@@ -155,16 +155,16 @@ Plot saved to: SN_2009ip/F814W_20150523/ickj02gfq_drz.png
 After running, you'll have:
 
 ```
-SN_2009ip/
-├── F275W_20150525/
-│   ├── ickj01elq_drz.fits   # Science-ready HST image
-│   └── ickj01elq_drz.png    # Preview plot
-├── F555W_20150523/
-│   ├── ickj02ggq_drz.fits   # Science-ready HST image
-│   └── ickj02ggq_drz.png    # Preview plot
-└── F814W_20150523/
-    ├── ickj02gfq_drz.fits   # Science-ready HST image
-    └── ickj02gfq_drz.png    # Preview plot
+2016jbu/
+├── F555W_20160405/
+│   ├── image1_drz.fits      # Science-ready HST image
+│   └── image1_drz.png       # Preview plot
+├── F814W_20160403/
+│   ├── image2_drz.fits      # Science-ready HST image
+│   └── image2_drz.png       # Preview plot
+└── F435W_20160403/
+    ├── image3_drz.fits      # Science-ready HST image
+    └── image3_drz.png       # Preview plot
 ```
 
 **Note**: The tool:
@@ -187,7 +187,7 @@ The generated preview plot shows:
 
 ![Example Output](example_output.png)
 
-*Example: HST WFPC2/PC F606W image of SN 2009ip from 1999-06-29 (DRZ file)*
+*Example: HST ACS/WFC F555W image of 2016jbu from 2016-04-05 (DRZ file)*
 
 ## Use Cases
 
@@ -204,7 +204,7 @@ python3 check_HST_coverage.py --tns "SN 2023A" --download --plot --max-images 5
 Monitor variable stars with multi-epoch HST data:
 
 ```bash
-python3 check_HST_coverage.py --tns "SN 2009ip" --download --plot --file-type flt --max-images 10
+python3 check_HST_coverage.py --tns "2016jbu" --download --plot --file-type flt --max-images 10
 ```
 
 ### 3. Galaxy Field Monitoring
@@ -225,7 +225,7 @@ Available file types:
 **Default is FLT** for time-domain astronomy and variability studies. For ready-to-use science images:
 
 ```bash
-python3 check_HST_coverage.py --tns "SN 2009ip" --download --file-type drz --max-images 3
+python3 check_HST_coverage.py --tns "2016jbu" --download --file-type drz --max-images 3
 ```
 
 ### 5. Clean Cosmic Rays
@@ -237,7 +237,7 @@ For FLT files (flat-fielded individual exposures), you can clean cosmic rays usi
 pip install astroscrappy
 
 # Then run with cosmic ray cleaning
-python3 check_HST_coverage.py --tns "SN 2009ip" --download --plot --file-type flt --clean-cosmic-rays
+python3 check_HST_coverage.py --tns "2016jbu" --download --plot --file-type flt --clean-cosmic-rays
 ```
 
 **Note**: DRZ files are already drizzled science images that have had cosmic rays removed during processing, so cosmic ray cleaning is not needed for DRZ files.
