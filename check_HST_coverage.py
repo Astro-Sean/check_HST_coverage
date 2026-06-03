@@ -611,23 +611,25 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             compass_center_y = data.shape[0] * 0.15
             arrow_length = min(data.shape) * 0.12
             
-            # Draw North arrow
-            ax1.arrow(compass_center_x, compass_center_y,
-                     north_vec[0] * arrow_length, north_vec[1] * arrow_length,
-                     head_width=arrow_length*0.4, head_length=arrow_length*0.4,
-                     fc='white', ec='white', lw=3, zorder=200)
-            ax1.text(compass_center_x + north_vec[0] * arrow_length * 1.4,
-                     compass_center_y + north_vec[1] * arrow_length * 1.4,
+            # Draw North arrow using annotate (more reliable with WCSAxes)
+            north_end_x = compass_center_x + north_vec[0] * arrow_length
+            north_end_y = compass_center_y + north_vec[1] * arrow_length
+            ax1.annotate('', xy=(north_end_x, north_end_y), xytext=(compass_center_x, compass_center_y),
+                        arrowprops=dict(arrowstyle='->', color='white', lw=3, zorder=200),
+                        zorder=200)
+            ax1.text(north_end_x + north_vec[0] * arrow_length * 0.3,
+                     north_end_y + north_vec[1] * arrow_length * 0.3,
                      'N', color='white', fontsize=16, fontweight='bold',
                      ha='center', va='center', zorder=200)
             
-            # Draw East arrow
-            ax1.arrow(compass_center_x, compass_center_y,
-                     east_vec[0] * arrow_length, east_vec[1] * arrow_length,
-                     head_width=arrow_length*0.4, head_length=arrow_length*0.4,
-                     fc='white', ec='white', lw=3, zorder=200)
-            ax1.text(compass_center_x + east_vec[0] * arrow_length * 1.4,
-                     compass_center_y + east_vec[1] * arrow_length * 1.4,
+            # Draw East arrow using annotate
+            east_end_x = compass_center_x + east_vec[0] * arrow_length
+            east_end_y = compass_center_y + east_vec[1] * arrow_length
+            ax1.annotate('', xy=(east_end_x, east_end_y), xytext=(compass_center_x, compass_center_y),
+                        arrowprops=dict(arrowstyle='->', color='white', lw=3, zorder=200),
+                        zorder=200)
+            ax1.text(east_end_x + east_vec[0] * arrow_length * 0.3,
+                     east_end_y + east_vec[1] * arrow_length * 0.3,
                      'E', color='white', fontsize=16, fontweight='bold',
                      ha='center', va='center', zorder=200)
             
