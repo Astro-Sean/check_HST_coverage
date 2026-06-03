@@ -214,6 +214,28 @@ def download_hst_images(obs_table, output_dir="hst_images", max_images=1, file_t
         # Limit to max_images products
         science_products = science_products[:max_images]
         
+        # Skip files that already exist
+        import glob
+        already_have = []
+        to_download_mask = []
+        for i, row in enumerate(science_products):
+            fname = row['productFilename']
+            existing = glob.glob(os.path.join(output_dir, '**', fname), recursive=True)
+            if existing:
+                print(f"Already exists, skipping: {fname}")
+                already_have.append(existing[0])  # take first match only
+                to_download_mask.append(False)
+            else:
+                to_download_mask.append(True)
+        
+        science_products = science_products[to_download_mask]
+        
+        downloaded_files = list(already_have)
+        
+        if len(science_products) == 0:
+            print("All files already downloaded.")
+            return downloaded_files
+        
         print(f"Downloading {len(science_products)} products...")
         
         # Download products
@@ -223,7 +245,6 @@ def download_hst_images(obs_table, output_dir="hst_images", max_images=1, file_t
             curl_flag=False
         )
         
-        downloaded_files = []
         # Handle manifest - it could be a pandas DataFrame or astropy Table
         try:
             if hasattr(manifest, 'iterrows'):
@@ -424,7 +445,7 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 cutout = data[y_min:y_max, x_min:x_max]
                 
                 # Add rectangle on full image to mark cutout region
-                from matplotlib.patches import Rectangle
+                from matplotlib.patches import Rectangle, ConnectionPatch
                 rect = Rectangle((x_min, y_min), x_max - x_min, y_max - y_min,
                                linewidth=2, edgecolor='yellow', facecolor='none')
                 ax1.add_patch(rect)
@@ -503,10 +524,20 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 ax2.set_xlim(-0.5, nx - 0.5)
                 ax2.set_ylim(-0.5, ny - 0.5)
                 
-                # Draw connector lines from the rectangle on the full image to the cutout panel
-                from mpl_toolkits.axes_grid1.inset_locator import mark_inset
-                mark_inset(ax1, ax2, loc1=2, loc2=4,
-                           fc='none', ec='yellow', lw=1.5, linestyle='--')
+                # Draw connector lines from cutout rectangle corners to cutout panel corners
+                from matplotlib.patches import ConnectionPatch
+                # top-left of rect -> top-left of ax2
+                con1 = ConnectionPatch(
+                    xyA=(x_min, y_max), coordsA=ax1.transData,
+                    xyB=(0, ny - 1),    coordsB=ax2.transData,
+                    color='yellow', lw=1.5, linestyle='--')
+                # bottom-right of rect -> bottom-right of ax2
+                con2 = ConnectionPatch(
+                    xyA=(x_max, y_min), coordsA=ax1.transData,
+                    xyB=(nx - 1, 0),    coordsB=ax2.transData,
+                    color='yellow', lw=1.5, linestyle='--')
+                fig.add_artist(con1)
+                fig.add_artist(con2)
                 
                 # Add hollow circle at center
                 # Check for FWHM in header, otherwise use default
