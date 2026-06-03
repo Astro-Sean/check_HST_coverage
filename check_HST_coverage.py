@@ -426,6 +426,12 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 
                 cutout = data[y_min:y_max, x_min:x_max]
                 
+                # Add rectangle on full image to mark cutout region
+                from matplotlib.patches import Rectangle
+                rect = Rectangle((x_min, y_min), x_max - x_min, y_max - y_min,
+                               linewidth=2, edgecolor='yellow', facecolor='none', linestyle='--')
+                ax1.add_patch(rect)
+                
                 # Display cutout with zscale
                 zscale_interval_cut = ZScaleInterval()
                 z1_cut, z2_cut = zscale_interval_cut.get_limits(cutout)
