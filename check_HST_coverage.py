@@ -448,7 +448,7 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 # Add rectangle on full image to mark cutout region
                 from matplotlib.patches import Rectangle, ConnectionPatch
                 rect = Rectangle((x_min, y_min), x_max - x_min, y_max - y_min,
-                               linewidth=2, edgecolor='yellow', facecolor='none')
+                               linewidth=2, edgecolor='red', facecolor='none')
                 ax1.add_patch(rect)
                 
                 # Display cutout with zscale
@@ -527,16 +527,16 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 
                 # Draw connector lines from cutout rectangle corners to inset corners
                 from matplotlib.patches import ConnectionPatch
-                # bottom-left of rect -> bottom-left of inset
-                con1 = ConnectionPatch(
-                    xyA=(x_min, y_min), coordsA=ax1.transData,
-                    xyB=(0, 0),         coordsB=ax2.transData,
-                    color='yellow', lw=1.5, linestyle='--')
                 # top-left of rect -> top-left of inset
-                con2 = ConnectionPatch(
+                con1 = ConnectionPatch(
                     xyA=(x_min, y_max), coordsA=ax1.transData,
                     xyB=(0, ny - 1),    coordsB=ax2.transData,
-                    color='yellow', lw=1.5, linestyle='--')
+                    color='red', lw=1.5, linestyle='--')
+                # bottom-right of rect -> bottom-right of inset
+                con2 = ConnectionPatch(
+                    xyA=(x_max, y_min), coordsA=ax1.transData,
+                    xyB=(nx - 1, 0),    coordsB=ax2.transData,
+                    color='red', lw=1.5, linestyle='--')
                 fig.add_artist(con1)
                 fig.add_artist(con2)
                 
