@@ -597,7 +597,7 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                         ha='center', va='bottom', color='red', fontsize=18, zorder=300)
             
             # Draw East arrow (pointing right in axes coordinates)
-            ax1.annotate('E', xy=(compass_x + arrow_len, compass_y), xytext=(compass_x, compass_y),
+            ax1.annotate('E', xy=(compass_x + arrow_len * 1.5, compass_y), xytext=(compass_x, compass_y),
                         xycoords='axes fraction', textcoords='axes fraction',
                         arrowprops=dict(arrowstyle='->', color='red', lw=0.5),
                         ha='left', va='center', color='red', fontsize=18, zorder=300)
