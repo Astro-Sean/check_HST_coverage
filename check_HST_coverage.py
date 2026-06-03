@@ -561,14 +561,7 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 fig.add_artist(con1)
                 fig.add_artist(con2)
                 
-                # Add hollow circle at center
-                # Check for FWHM in header, otherwise use default
-                fwhm = None
-                for key in header.keys():
-                    if key and 'FWHM' in key.upper():
-                        fwhm = header[key]
-                        break
-                
+                # Add hollow circle at center (1 arcsecond diameter)
                 # Calculate target position within the cutout (in cutout pixel coordinates)
                 # x_target, y_target are the pixel coordinates of the target in the full image
                 # The cutout starts at (x_min, y_min) in the full image
@@ -576,15 +569,10 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 center_x = x_target - x_min
                 center_y = y_target - y_min
                 
-                if fwhm is not None and fwhm > 0:
-                    # Scale circle to 1.7 * FWHM
-                    # Convert FWHM (presumably in arcsec) to pixels
-                    pixel_scale_arcsec = pixel_scale_deg * 3600.0  # arcsec per pixel
-                    circle_radius_pix = (1.7 * fwhm) / pixel_scale_arcsec
-                    markersize = circle_radius_pix * 2
-                else:
-                    # Default circle size
-                    markersize = 10
+                # Circle with 1 arcsecond diameter
+                pixel_scale_arcsec = pixel_scale_deg * 3600.0  # arcsec per pixel
+                circle_diameter_pix = 1.0 / pixel_scale_arcsec  # 1 arcsec diameter in pixels
+                markersize = circle_diameter_pix * 2  # matplotlib markersize is roughly 2x the pixel size
                 
                 ax2.plot(center_x, center_y, 'ro', markersize=markersize, markeredgewidth=2, fillstyle='none')
             
