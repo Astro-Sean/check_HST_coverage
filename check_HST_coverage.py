@@ -531,12 +531,12 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 con1 = ConnectionPatch(
                     xyA=(x_min, y_max), coordsA=ax1.transData,
                     xyB=(0, ny - 1),    coordsB=ax2.transData,
-                    color='red', lw=1.5, linestyle='--')
+                    color='red', lw=1.5, linestyle='--', zorder=0)
                 # bottom-right of rect -> bottom-right of inset
                 con2 = ConnectionPatch(
                     xyA=(x_max, y_min), coordsA=ax1.transData,
                     xyB=(nx - 1, 0),    coordsB=ax2.transData,
-                    color='red', lw=1.5, linestyle='--')
+                    color='red', lw=1.5, linestyle='--', zorder=0)
                 fig.add_artist(con1)
                 fig.add_artist(con2)
                 
