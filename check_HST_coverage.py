@@ -606,30 +606,30 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             north_vec = north_vec / np.linalg.norm(north_vec)
             east_vec = east_vec / np.linalg.norm(east_vec)
             
-            # Compass position in data coordinates (bottom-right of image)
-            compass_center_x = data.shape[1] * 0.9
-            compass_center_y = data.shape[0] * 0.1
-            arrow_length = min(data.shape) * 0.08
+            # Compass position in data coordinates (bottom-right of image, avoiding inset)
+            compass_center_x = data.shape[1] * 0.85
+            compass_center_y = data.shape[0] * 0.15
+            arrow_length = min(data.shape) * 0.12
             
             # Draw North arrow
             ax1.arrow(compass_center_x, compass_center_y,
                      north_vec[0] * arrow_length, north_vec[1] * arrow_length,
-                     head_width=arrow_length*0.3, head_length=arrow_length*0.3,
-                     fc='white', ec='white', lw=2, zorder=10)
-            ax1.text(compass_center_x + north_vec[0] * arrow_length * 1.3,
-                     compass_center_y + north_vec[1] * arrow_length * 1.3,
-                     'N', color='white', fontsize=12, fontweight='bold',
-                     ha='center', va='center', zorder=10)
+                     head_width=arrow_length*0.4, head_length=arrow_length*0.4,
+                     fc='white', ec='white', lw=3, zorder=200)
+            ax1.text(compass_center_x + north_vec[0] * arrow_length * 1.4,
+                     compass_center_y + north_vec[1] * arrow_length * 1.4,
+                     'N', color='white', fontsize=16, fontweight='bold',
+                     ha='center', va='center', zorder=200)
             
             # Draw East arrow
             ax1.arrow(compass_center_x, compass_center_y,
                      east_vec[0] * arrow_length, east_vec[1] * arrow_length,
-                     head_width=arrow_length*0.3, head_length=arrow_length*0.3,
-                     fc='white', ec='white', lw=2, zorder=10)
-            ax1.text(compass_center_x + east_vec[0] * arrow_length * 1.3,
-                     compass_center_y + east_vec[1] * arrow_length * 1.3,
-                     'E', color='white', fontsize=12, fontweight='bold',
-                     ha='center', va='center', zorder=10)
+                     head_width=arrow_length*0.4, head_length=arrow_length*0.4,
+                     fc='white', ec='white', lw=3, zorder=200)
+            ax1.text(compass_center_x + east_vec[0] * arrow_length * 1.4,
+                     compass_center_y + east_vec[1] * arrow_length * 1.4,
+                     'E', color='white', fontsize=16, fontweight='bold',
+                     ha='center', va='center', zorder=200)
             
             # Adjust layout
             plt.tight_layout()
