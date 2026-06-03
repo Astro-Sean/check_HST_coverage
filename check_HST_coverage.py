@@ -523,8 +523,8 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 ax2.set_yticks(y_tick_pix)
                 ax2.set_xticklabels([f'{x:.1f}' for x in x_tick_arcsec])
                 ax2.set_yticklabels([f'{y:.1f}' for y in y_tick_arcsec])
-                ax2.set_xlabel('Δα (")', fontsize=8)
-                ax2.set_ylabel('Δδ (")', fontsize=8)
+                ax2.set_xlabel('Δα (")', fontsize=8, color='red')
+                ax2.set_ylabel('Δδ (")', fontsize=8, color='red')
                 ax2.tick_params(labelsize=7)
                 
                 # Move x-axis to top and y-axis to right to avoid connector overlap
