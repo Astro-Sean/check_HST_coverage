@@ -34,11 +34,12 @@ This tool queries the MAST (Mikulski Archive for Space Telescopes) database to:
 - astroquery
 - matplotlib
 - numpy
+- astroscrappy (optional, for cosmic ray cleaning)
 
 ### Install Dependencies
 
 ```bash
-pip install astropy astroquery matplotlib numpy
+pip install astropy astroquery matplotlib numpy astroscrappy
 ```
 
 ## Usage
@@ -79,7 +80,7 @@ python3 check_HST_coverage.py --ra 335.784417 --dec -28.947889 --download --plot
 --max-images N            # Maximum number of images to download (default: 1)
 --file-type TYPE          # File type to download: flt, drz, crj (default: flt)
 --output-dir DIR          # Output directory for downloads
---clean-cosmic-rays       # Clean cosmic rays using ccdproc (requires: pip install ccdproc)
+--clean-cosmic-rays       # Clean cosmic rays using astroscrappy (requires: pip install astroscrappy)
 ```
 
 ## Example: SN 2009ip
@@ -181,6 +182,8 @@ The generated preview plot shows:
 
 ![Example Output](example_output.png)
 
+*Example: HST WFPC2/PC F606W image of SN 2009ip from 1999-06-29 (DRZ file)*
+
 ## Use Cases
 
 ### 1. Supernova Follow-up
@@ -222,15 +225,17 @@ python3 check_HST_coverage.py --tns "SN 2009ip" --download --file-type drz --max
 
 ### 5. Clean Cosmic Rays
 
-For FLT files, you can clean cosmic rays using the LA Cosmic algorithm via ccdproc:
+For FLT files (flat-fielded individual exposures), you can clean cosmic rays using the LA Cosmic algorithm via astroscrappy:
 
 ```bash
-# Install ccdproc first
-pip install ccdproc
+# Install astroscrappy first
+pip install astroscrappy
 
 # Then run with cosmic ray cleaning
 python3 check_HST_coverage.py --tns "SN 2009ip" --download --plot --file-type flt --clean-cosmic-rays
 ```
+
+**Note**: DRZ files are already drizzled science images that have had cosmic rays removed during processing, so cosmic ray cleaning is not needed for DRZ files.
 
 The tool automatically reads the FITS header to determine optimal parameters:
 - **GAIN**: From header (electrons/ADU)

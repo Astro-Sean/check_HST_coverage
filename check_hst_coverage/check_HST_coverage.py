@@ -329,7 +329,7 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             # Clean cosmic rays if requested
             if clean_cosmic_rays:
                 try:
-                    from ccdproc import cosmicray_lacosmic
+                    from astroscrappy import detect_cosmics
                     import numpy as np
                     
                     # Get parameters from header for informed selection
@@ -339,23 +339,22 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                     
                     print(f"  Cleaning cosmic rays (gain={gain}, readnoise={readnoise}, exptime={exptime})...")
                     
-                    # Run LA Cosmic with header-informed parameters
-                    cr_cleaned_data, cr_mask = cosmicray_lacosmic(
+                    # Run LA Cosmic with header-informed parameters using astroscrappy
+                    cr_cleaned_data, cr_mask = detect_cosmics(
                         data,
                         gain=gain,
                         readnoise=readnoise,
                         sigclip=5.0,
                         sigfrac=0.3,
                         objlim=5.0,
-                        satlevel=65535.0,
-                        niter=4
+                        satlevel=65535.0
                     )
                     
                     data = cr_cleaned_data
                     print(f"  Cosmic ray cleaning complete")
                 except ImportError:
-                    print("  Warning: ccdproc not installed. Skipping cosmic ray cleaning.")
-                    print("  Install with: pip install ccdproc")
+                    print("  Warning: astroscrappy not installed. Skipping cosmic ray cleaning.")
+                    print("  Install with: pip install astroscrappy")
                 except Exception as e:
                     print(f"  Warning: Cosmic ray cleaning failed: {e}")
                     print("  Continuing with original data")
