@@ -585,22 +585,22 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                      color='white', va='bottom', ha='left',
                      bbox=dict(facecolor='black', alpha=0.4, edgecolor='none', pad=3))
             
-            # Add compass rose in bottom-right showing North and East
+            # Add compass rose in bottom-right showing North and East (red)
             # Use axes fraction coordinates for reliable positioning
-            compass_x, compass_y = 0.92, 0.08  # bottom-right in axes fraction
-            arrow_len = 0.08  # length in axes fraction
+            compass_x, compass_y = 0.95, 0.05  # bottom-right in axes fraction
+            arrow_len = 0.06  # length in axes fraction
             
             # Draw North arrow (pointing up in axes coordinates)
             ax1.annotate('N', xy=(compass_x, compass_y + arrow_len), xytext=(compass_x, compass_y),
                         xycoords='axes fraction', textcoords='axes fraction',
-                        arrowprops=dict(arrowstyle='->', color='white', lw=3),
-                        ha='center', va='bottom', color='white', fontsize=16, fontweight='bold', zorder=200)
+                        arrowprops=dict(arrowstyle='->', color='red', lw=3),
+                        ha='center', va='bottom', color='red', fontsize=14, fontweight='bold', zorder=300)
             
             # Draw East arrow (pointing right in axes coordinates)
             ax1.annotate('E', xy=(compass_x + arrow_len, compass_y), xytext=(compass_x, compass_y),
                         xycoords='axes fraction', textcoords='axes fraction',
-                        arrowprops=dict(arrowstyle='->', color='white', lw=3),
-                        ha='left', va='center', color='white', fontsize=16, fontweight='bold', zorder=200)
+                        arrowprops=dict(arrowstyle='->', color='red', lw=3),
+                        ha='left', va='center', color='red', fontsize=14, fontweight='bold', zorder=300)
             
             # Adjust layout
             plt.tight_layout()
