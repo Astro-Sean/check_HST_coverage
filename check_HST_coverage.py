@@ -474,9 +474,9 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 x_min_arcsec, x_max_arcsec = min(x_min_arcsec, x_max_arcsec), max(x_min_arcsec, x_max_arcsec)
                 y_min_arcsec, y_max_arcsec = min(y_min_arcsec, y_max_arcsec), max(y_min_arcsec, y_max_arcsec)
                 
-                # Create tick values at 1 arcsec intervals centered on 0
+                # Create tick values at 1 arcsec intervals
                 def nice_ticks(min_val, max_val):
-                    """Generate tick values at 1 arcsec intervals centered on 0."""
+                    """Generate tick values at 1 arcsec intervals."""
                     # Generate ticks from floor(min) to ceil(max) at 1 arcsec steps
                     tick_min = np.floor(min_val)
                     tick_max = np.ceil(max_val)
@@ -511,12 +511,17 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 x_tick_indices, x_tick_values = zip(*x_sorted) if x_sorted else ([], [])
                 y_tick_indices, y_tick_values = zip(*y_sorted) if y_sorted else ([], [])
                 
+                # Set ticks and labels
                 ax2.set_xticks(x_tick_indices)
                 ax2.set_yticks(y_tick_indices)
                 ax2.set_xticklabels([f'{x:.1f}' for x in x_tick_values])
                 ax2.set_yticklabels([f'{y:.1f}' for y in y_tick_values])
                 ax2.set_xlabel('ΔRA (arcsec)', fontsize=12)
                 ax2.set_ylabel('ΔDEC (arcsec)', fontsize=12)
+                
+                # Set axis limits to match the cutout
+                ax2.set_xlim(-0.5, nx - 0.5)
+                ax2.set_ylim(-0.5, ny - 0.5)
                 
                 # Add hollow circle at center
                 # Check for FWHM in header, otherwise use default
