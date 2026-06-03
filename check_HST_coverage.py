@@ -424,7 +424,7 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             
             # Inset axes in top-right corner: 5 arcsec wide (2.5 arcsec radius) cutout
             from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-            ax2 = inset_axes(ax1, width='25%', height='25%', loc='upper right', borderpad=8.0)
+            ax2 = inset_axes(ax1, width='25%', height='25%', loc='upper right', borderpad=3.0)
             if target_ra is not None and target_dec is not None and target_in_bounds:
                 # Convert 2.5 arcsec radius to degrees (gives 5 arcsec wide cutout)
                 cutout_radius_deg = 2.5 / 3600.0
@@ -603,16 +603,16 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             arrow_len = 0.06  # length in axes fraction (smaller to fit within image)
             
             # Draw North arrow (pointing up in axes coordinates)
-            ax1.annotate('N', xy=(compass_x, compass_y + arrow_len), xytext=(compass_x, compass_y),
+            ax1.annotate('N', xy=(compass_x, compass_y +0.01+ arrow_len*1.5), xytext=(compass_x, compass_y+0.01),
                         xycoords='axes fraction', textcoords='axes fraction',
                         arrowprops=dict(arrowstyle='->', color='red', lw=0.5),
-                        ha='center', va='bottom', color='red', fontsize=16, zorder=300)
+                        ha='center', va='bottom', color='red', fontsize=12, zorder=300)
             
             # Draw East arrow (pointing right in axes coordinates)
-            ax1.annotate('E', xy=(compass_x + arrow_len * 1.5, compass_y), xytext=(compass_x, compass_y),
+            ax1.annotate('E', xy=(compass_x +0.01+ arrow_len * 1.5, compass_y), xytext=(compass_x+0.01, compass_y),
                         xycoords='axes fraction', textcoords='axes fraction',
                         arrowprops=dict(arrowstyle='->', color='red', lw=0.5),
-                        ha='left', va='center', color='red', fontsize=16, zorder=300)
+                        ha='left', va='center', color='red', fontsize=12, zorder=300)
             
             # Adjust layout
             plt.tight_layout()

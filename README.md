@@ -17,11 +17,13 @@ This tool queries the MAST (Mikulski Archive for Space Telescopes) database to:
 - **Smart Filtering**: Prioritize observations that actually overlap with the target coordinates using polygon checks
 - **Automatic Downloads**: Download HST science products (DRZ, FLT, etc.) directly from MAST
 - **Organized Output**: Files automatically organized into `{FILTER}_{YYYYMMDD}/` subfolders
-- **Preview Generation**: Create two-panel plots with:
+- **Preview Generation**: Create single-panel plots with inset:
   - Full image with WCS RA/DEC axes
-  - 5 arcsecond cutout centered on target with ΔRA/ΔDEC in arcseconds
+  - 5 arcsecond cutout centered on target displayed as inset in top-right corner
+  - Inset axes with ΔRA/ΔDEC in arcseconds (top and right axes)
+  - Red connector lines linking cutout region to inset
+  - Red compass rose showing North and East directions
   - ZScale contrast scaling (DS9-like)
-  - Crosshairs at target position
   - Hollow circle marker on cutout
   - Observation metadata (instrument, filter, date)
 
@@ -174,11 +176,14 @@ SN_2009ip/
 ### Example Output Plot
 
 The generated preview plot shows:
-- **Left Panel**: Full HST image with WCS coordinates (RA/DEC) and crosshairs at target position
-- **Right Panel**: 5 arcsecond cutout centered on SN 2009ip with:
-  - ΔRA and ΔDEC axes in arcseconds (1 arcsec tick spacing)
+- **Main Panel**: Full HST image with WCS coordinates (RA/DEC)
+- **Inset**: 5 arcsecond cutout centered on target in top-right corner with:
+  - ΔRA and ΔDEC axes in arcseconds (top and right axes)
+  - Red connector lines linking cutout region to inset
+  - Red compass rose showing North and East directions
   - Hollow circle marker at target position
   - ZScale contrast for optimal image display
+- **Colorbar**: With intensity units from FITS header
 
 ![Example Output](example_output.png)
 
