@@ -401,11 +401,11 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             
             plt.colorbar(im1, ax=ax1, fraction=0.046, pad=0.04)
             
-            # Right panel: 5 arcsec cutout (only if target is within bounds)
+            # Right panel: 5 arcsec wide (2.5 arcsec radius) cutout
             ax2 = fig.add_subplot(1, 2, 2)
             if target_ra is not None and target_dec is not None and target_in_bounds:
-                # Convert 5 arcsec to degrees
-                cutout_radius_deg = 5.0 / 3600.0  # 5 arcsec in degrees
+                # Convert 2.5 arcsec radius to degrees (gives 5 arcsec wide cutout)
+                cutout_radius_deg = 2.5 / 3600.0
                 
                 # Get pixel coordinates of target
                 x_target, y_target = wcs.world_to_pixel_values(target_ra, target_dec)
@@ -426,14 +426,14 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 # Add rectangle on full image to mark cutout region
                 from matplotlib.patches import Rectangle
                 rect = Rectangle((x_min, y_min), x_max - x_min, y_max - y_min,
-                               linewidth=2, edgecolor='yellow', facecolor='none', linestyle='--')
+                               linewidth=2, edgecolor='yellow', facecolor='none')
                 ax1.add_patch(rect)
                 
                 # Display cutout with zscale
                 zscale_interval_cut = ZScaleInterval()
                 z1_cut, z2_cut = zscale_interval_cut.get_limits(cutout)
                 im2 = ax2.imshow(cutout, origin='lower', cmap='viridis', vmin=z1_cut, vmax=z2_cut)
-                ax2.set_title(f'5 arcsec Cutout', fontsize=14)
+                ax2.set_title(f'5" Cutout', fontsize=14)
                 
                 # Calculate RA/DEC offsets for axes in arcseconds
                 import numpy as np
@@ -474,10 +474,10 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 y_arcsec_range = (ddec_col[0], ddec_col[-1])
                 
                 # Create tick values at 1 arcsec intervals within the actual range
-                def nice_ticks(arcsec_start, arcsec_end):
-                    """Generate tick values at 1 arcsec steps within the given range."""
+                def nice_ticks(arcsec_start, arcsec_end, step=1.0):
+                    """Generate tick values at given step within the range."""
                     lo, hi = min(arcsec_start, arcsec_end), max(arcsec_start, arcsec_end)
-                    return np.arange(np.ceil(lo), np.floor(hi) + 1, 1.0)
+                    return np.arange(np.ceil(lo / step) * step, np.floor(hi / step) * step + step * 0.5, step)
                 
                 x_tick_arcsec = nice_ticks(*x_arcsec_range)
                 y_tick_arcsec = nice_ticks(*y_arcsec_range)
@@ -502,6 +502,11 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 # Set axis limits to match the cutout
                 ax2.set_xlim(-0.5, nx - 0.5)
                 ax2.set_ylim(-0.5, ny - 0.5)
+                
+                # Draw connector lines from the rectangle on the full image to the cutout panel
+                from mpl_toolkits.axes_grid1.inset_locator import mark_inset
+                mark_inset(ax1, ax2, loc1=2, loc2=4,
+                           fc='none', ec='yellow', lw=1.5, linestyle='--')
                 
                 # Add hollow circle at center
                 # Check for FWHM in header, otherwise use default
