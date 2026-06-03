@@ -385,12 +385,12 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             zscale_interval = ZScaleInterval()
             z1, z2 = zscale_interval.get_limits(data)
             
-            # Create figure with WCSAxes for proper coordinate display
+            # Create figure with single WCSAxes panel
             from astropy.visualization.wcsaxes import WCSAxes
-            fig = plt.figure(figsize=(16, 7))
+            fig = plt.figure(figsize=(10, 9))
             
-            # Left panel: Full image with WCS
-            ax1 = fig.add_subplot(1, 2, 1, projection=wcs)
+            # Full image with WCS
+            ax1 = fig.add_subplot(1, 1, 1, projection=wcs)
             im1 = ax1.imshow(data, origin='lower', cmap='viridis', vmin=z1, vmax=z2)
             ax1.set_title('Full Image', fontsize=14)
             ax1.grid(color='white', linestyle=':', linewidth=0.5, alpha=0.5)
@@ -422,8 +422,9 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             
             plt.colorbar(im1, ax=ax1, fraction=0.046, pad=0.04)
             
-            # Right panel: 5 arcsec wide (2.5 arcsec radius) cutout
-            ax2 = fig.add_subplot(1, 2, 2)
+            # Inset axes in top-right corner: 5 arcsec wide (2.5 arcsec radius) cutout
+            from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+            ax2 = inset_axes(ax1, width='35%', height='35%', loc='upper right')
             if target_ra is not None and target_dec is not None and target_in_bounds:
                 # Convert 2.5 arcsec radius to degrees (gives 5 arcsec wide cutout)
                 cutout_radius_deg = 2.5 / 3600.0
@@ -517,24 +518,25 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 ax2.set_yticks(y_tick_pix)
                 ax2.set_xticklabels([f'{x:.1f}' for x in x_tick_arcsec])
                 ax2.set_yticklabels([f'{y:.1f}' for y in y_tick_arcsec])
-                ax2.set_xlabel('ΔRA (arcsec)', fontsize=12)
-                ax2.set_ylabel('ΔDEC (arcsec)', fontsize=12)
+                ax2.set_xlabel('ΔRA (arcsec)', fontsize=8)
+                ax2.set_ylabel('ΔDEC (arcsec)', fontsize=8)
+                ax2.tick_params(labelsize=7)
                 
                 # Set axis limits to match the cutout
                 ax2.set_xlim(-0.5, nx - 0.5)
                 ax2.set_ylim(-0.5, ny - 0.5)
                 
-                # Draw connector lines from cutout rectangle corners to cutout panel corners
+                # Draw connector lines from cutout rectangle corners to inset corners
                 from matplotlib.patches import ConnectionPatch
-                # top-left of rect -> top-left of ax2
+                # bottom-left of rect -> bottom-left of inset
                 con1 = ConnectionPatch(
+                    xyA=(x_min, y_min), coordsA=ax1.transData,
+                    xyB=(0, 0),         coordsB=ax2.transData,
+                    color='yellow', lw=1.5, linestyle='--')
+                # top-left of rect -> top-left of inset
+                con2 = ConnectionPatch(
                     xyA=(x_min, y_max), coordsA=ax1.transData,
                     xyB=(0, ny - 1),    coordsB=ax2.transData,
-                    color='yellow', lw=1.5, linestyle='--')
-                # bottom-right of rect -> bottom-right of ax2
-                con2 = ConnectionPatch(
-                    xyA=(x_max, y_min), coordsA=ax1.transData,
-                    xyB=(nx - 1, 0),    coordsB=ax2.transData,
                     color='yellow', lw=1.5, linestyle='--')
                 fig.add_artist(con1)
                 fig.add_artist(con2)
@@ -562,18 +564,7 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 
                 ax2.plot(center_x, center_y, 'ro', markersize=markersize, markeredgewidth=2, fillstyle='none')
                 
-                plt.colorbar(im2, ax=ax2, fraction=0.046, pad=0.04)
-            elif target_ra is not None and target_dec is not None:
-                # Target outside bounds - show message in right panel
-                ax2.text(0.5, 0.5, 'Target outside\nimage bounds', 
-                        ha='center', va='center', transform=ax2.transAxes, 
-                        fontsize=14, color='red')
-                ax2.set_title('Cutout unavailable', fontsize=14, color='red')
-                ax2.axis('off')
-            else:
-                ax2.text(0.5, 0.5, 'Target coordinates\nnot provided', ha='center', va='center', 
-                         transform=ax2.transAxes, fontsize=14)
-                ax2.axis('off')
+                plt.colorbar(im2, ax=ax2, fraction=0.15, pad=0.03)
             
             # Add observation info to the plot
             obs_date = header.get('DATE-OBS', 'Unknown')
