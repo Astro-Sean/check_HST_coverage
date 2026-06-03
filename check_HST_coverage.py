@@ -586,52 +586,21 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                      bbox=dict(facecolor='black', alpha=0.4, edgecolor='none', pad=3))
             
             # Add compass rose in bottom-right showing North and East
-            # Get WCS orientation to determine which way is up
-            import numpy as np
-            # Get center of image in world coordinates
-            center_x, center_y = data.shape[1] / 2, data.shape[0] / 2
-            center_world = wcs.pixel_to_world(center_x, center_y)
-            center_ra, center_dec = center_world.ra.deg, center_world.dec.deg
+            # Use axes fraction coordinates for reliable positioning
+            compass_x, compass_y = 0.92, 0.08  # bottom-right in axes fraction
+            arrow_len = 0.08  # length in axes fraction
             
-            # Get a point north (in Dec) and east (in RA) from center
-            # North is increasing Dec, East is decreasing RA (for equatorial)
-            north_pixel = wcs.world_to_pixel_values(center_ra, center_dec + 0.01)
-            east_pixel = wcs.world_to_pixel_values(center_ra - 0.01, center_dec)
+            # Draw North arrow (pointing up in axes coordinates)
+            ax1.annotate('N', xy=(compass_x, compass_y + arrow_len), xytext=(compass_x, compass_y),
+                        xycoords='axes fraction', textcoords='axes fraction',
+                        arrowprops=dict(arrowstyle='->', color='white', lw=3),
+                        ha='center', va='bottom', color='white', fontsize=16, fontweight='bold', zorder=200)
             
-            # Calculate vectors from center (in pixel coordinates)
-            north_vec = np.array([north_pixel[0] - center_x, north_pixel[1] - center_y])
-            east_vec = np.array([east_pixel[0] - center_x, east_pixel[1] - center_y])
-            
-            # Normalize vectors
-            north_vec = north_vec / np.linalg.norm(north_vec)
-            east_vec = east_vec / np.linalg.norm(east_vec)
-            
-            # Compass position in data coordinates (bottom-right of image, avoiding inset)
-            compass_center_x = data.shape[1] * 0.85
-            compass_center_y = data.shape[0] * 0.15
-            arrow_length = min(data.shape) * 0.12
-            
-            # Draw North arrow using annotate (more reliable with WCSAxes)
-            north_end_x = compass_center_x + north_vec[0] * arrow_length
-            north_end_y = compass_center_y + north_vec[1] * arrow_length
-            ax1.annotate('', xy=(north_end_x, north_end_y), xytext=(compass_center_x, compass_center_y),
-                        arrowprops=dict(arrowstyle='->', color='white', lw=3, zorder=200),
-                        zorder=200)
-            ax1.text(north_end_x + north_vec[0] * arrow_length * 0.3,
-                     north_end_y + north_vec[1] * arrow_length * 0.3,
-                     'N', color='white', fontsize=16, fontweight='bold',
-                     ha='center', va='center', zorder=200)
-            
-            # Draw East arrow using annotate
-            east_end_x = compass_center_x + east_vec[0] * arrow_length
-            east_end_y = compass_center_y + east_vec[1] * arrow_length
-            ax1.annotate('', xy=(east_end_x, east_end_y), xytext=(compass_center_x, compass_center_y),
-                        arrowprops=dict(arrowstyle='->', color='white', lw=3, zorder=200),
-                        zorder=200)
-            ax1.text(east_end_x + east_vec[0] * arrow_length * 0.3,
-                     east_end_y + east_vec[1] * arrow_length * 0.3,
-                     'E', color='white', fontsize=16, fontweight='bold',
-                     ha='center', va='center', zorder=200)
+            # Draw East arrow (pointing right in axes coordinates)
+            ax1.annotate('E', xy=(compass_x + arrow_len, compass_y), xytext=(compass_x, compass_y),
+                        xycoords='axes fraction', textcoords='axes fraction',
+                        arrowprops=dict(arrowstyle='->', color='white', lw=3),
+                        ha='left', va='center', color='white', fontsize=16, fontweight='bold', zorder=200)
             
             # Adjust layout
             plt.tight_layout()
