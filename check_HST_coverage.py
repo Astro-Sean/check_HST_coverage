@@ -392,14 +392,13 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             # Full image with WCS
             ax1 = fig.add_subplot(1, 1, 1, projection=wcs)
             im1 = ax1.imshow(data, origin='lower', cmap='viridis', vmin=z1, vmax=z2)
-            ax1.set_title('Full Image', fontsize=14)
             ax1.grid(color='white', linestyle=':', linewidth=0.5, alpha=0.5)
             
             # Format RA/DEC labels
-            ax1.coords['ra'].set_axislabel('RA', fontsize=12)
-            ax1.coords['dec'].set_axislabel('DEC', fontsize=12)
-            ax1.coords['ra'].format_unit = 'deg'
-            ax1.coords['dec'].format_unit = 'deg'
+            ax1.coords['ra'].set_axislabel('RA (deg)', fontsize=12)
+            ax1.coords['dec'].set_axislabel('Dec (deg)', fontsize=12)
+            ax1.coords['ra'].set_ticklabel(size=10)
+            ax1.coords['dec'].set_ticklabel(size=10)
             
             # Add crosshair at target coordinates if provided
             target_in_bounds = False
@@ -418,7 +417,8 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 else:
                     print(f"Warning: Target coordinates ({target_ra:.6f}, {target_dec:.6f}) fall outside the image bounds.")
                     print(f"  Pixel coordinates: ({x_target:.1f}, {y_target:.1f}) outside [0:{nx}, 0:{ny}]")
-                    ax1.set_title('Full Image (Target outside bounds)', fontsize=14, color='red')
+                    ax1.text(0.5, 0.01, 'Target outside image bounds', ha='center', va='bottom',
+                             transform=ax1.transAxes, fontsize=10, color='red')
             
             plt.colorbar(im1, ax=ax1, fraction=0.046, pad=0.04)
             
@@ -455,7 +455,6 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 zscale_interval_cut = ZScaleInterval()
                 z1_cut, z2_cut = zscale_interval_cut.get_limits(cutout)
                 im2 = ax2.imshow(cutout, origin='lower', cmap='viridis', vmin=z1_cut, vmax=z2_cut)
-                ax2.set_title(f'5" Cutout', fontsize=14)
                 
                 # Calculate RA/DEC offsets for axes in arcseconds
                 import numpy as np
@@ -518,8 +517,8 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 ax2.set_yticks(y_tick_pix)
                 ax2.set_xticklabels([f'{x:.1f}' for x in x_tick_arcsec])
                 ax2.set_yticklabels([f'{y:.1f}' for y in y_tick_arcsec])
-                ax2.set_xlabel('ΔRA (arcsec)', fontsize=8)
-                ax2.set_ylabel('ΔDEC (arcsec)', fontsize=8)
+                ax2.set_xlabel('Δα (")', fontsize=8)
+                ax2.set_ylabel('Δδ (")', fontsize=8)
                 ax2.tick_params(labelsize=7)
                 
                 # Set axis limits to match the cutout
@@ -563,8 +562,6 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                     markersize = 10
                 
                 ax2.plot(center_x, center_y, 'ro', markersize=markersize, markeredgewidth=2, fillstyle='none')
-                
-                plt.colorbar(im2, ax=ax2, fraction=0.15, pad=0.03)
             
             # Add observation info to the plot
             obs_date = header.get('DATE-OBS', 'Unknown')
@@ -582,12 +579,14 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             except:
                 formatted_date = obs_date
             
-            # Add info text
+            # Add observation info as text inside the plot (bottom-left)
             info_text = f'HST {instrument} | {filter_name} | {formatted_date}'
-            fig.suptitle(info_text, fontsize=16, y=0.98)
+            ax1.text(0.01, 0.01, info_text, transform=ax1.transAxes, fontsize=10,
+                     color='white', va='bottom', ha='left',
+                     bbox=dict(facecolor='black', alpha=0.4, edgecolor='none', pad=3))
             
-            # Adjust layout to prevent label overlap
-            plt.tight_layout(rect=[0, 0, 1, 0.96])
+            # Adjust layout
+            plt.tight_layout()
             
             # Only save plot if target is within bounds
             if target_in_bounds or target_ra is None or target_dec is None:
