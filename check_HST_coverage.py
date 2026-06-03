@@ -532,6 +532,9 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                     spine.set_edgecolor('red')
                     spine.set_linewidth(1.5)
                 
+                # Set tick colors and labels to red
+                ax2.tick_params(axis='both', colors='red', labelcolor='red')
+                
                 # Set axis limits to match the cutout
                 ax2.set_xlim(-0.5, nx - 0.5)
                 ax2.set_ylim(-0.5, ny - 0.5)
@@ -560,8 +563,12 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                         fwhm = header[key]
                         break
                 
-                center_x = cutout.shape[1] / 2
-                center_y = cutout.shape[0] / 2
+                # Calculate target position within the cutout (in cutout pixel coordinates)
+                # x_target, y_target are the pixel coordinates of the target in the full image
+                # The cutout starts at (x_min, y_min) in the full image
+                # So the target position in the cutout is:
+                center_x = x_target - x_min
+                center_y = y_target - y_min
                 
                 if fwhm is not None and fwhm > 0:
                     # Scale circle to 1.7 * FWHM
@@ -643,7 +650,7 @@ def main():
     group.add_argument('--ra', type=float, help='Right Ascension in degrees')
     group.add_argument('--tns', type=str, help='TNS name to resolve')
     parser.add_argument('--dec', type=float, help='Declination in degrees (required with --ra)')
-    parser.add_argument('--radius', type=float, default=0.1, help='Search radius in degrees (default: 0.1)')
+    parser.add_argument('--radius', type=float, default=10.0/60.0, help='Search radius in degrees (default: 10 arcmin)')
     parser.add_argument('--download', action='store_true', help='Download HST images')
     parser.add_argument('--plot', action='store_true', help='Create plot from downloaded images')
     parser.add_argument('--max-images', type=int, default=1, help='Maximum number of images to download (default: 1)')
