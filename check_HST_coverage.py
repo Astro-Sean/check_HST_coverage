@@ -521,21 +521,28 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
                 ax2.set_ylabel('Δδ (")', fontsize=8)
                 ax2.tick_params(labelsize=7)
                 
+                # Move x-axis to top and y-axis to right to avoid connector overlap
+                ax2.xaxis.tick_top()
+                ax2.xaxis.set_label_position('top')
+                ax2.yaxis.tick_right()
+                ax2.yaxis.set_label_position('right')
+                
                 # Set axis limits to match the cutout
                 ax2.set_xlim(-0.5, nx - 0.5)
                 ax2.set_ylim(-0.5, ny - 0.5)
                 
                 # Draw connector lines from cutout rectangle corners to inset corners
+                # Connect to bottom-left and top-right corners to avoid axis labels
                 from matplotlib.patches import ConnectionPatch
-                # top-left of rect -> top-left of inset
+                # bottom-left of rect -> bottom-left of inset
                 con1 = ConnectionPatch(
-                    xyA=(x_min, y_max), coordsA=ax1.transData,
-                    xyB=(0, ny - 1),    coordsB=ax2.transData,
+                    xyA=(x_min, y_min), coordsA=ax1.transData,
+                    xyB=(0, 0),         coordsB=ax2.transData,
                     color='red', lw=1.5, linestyle='--', zorder=100)
-                # bottom-right of rect -> bottom-right of inset
+                # top-right of rect -> top-right of inset
                 con2 = ConnectionPatch(
-                    xyA=(x_max, y_min), coordsA=ax1.transData,
-                    xyB=(nx - 1, 0),    coordsB=ax2.transData,
+                    xyA=(x_max, y_max), coordsA=ax1.transData,
+                    xyB=(nx - 1, ny - 1), coordsB=ax2.transData,
                     color='red', lw=1.5, linestyle='--', zorder=100)
                 fig.add_artist(con1)
                 fig.add_artist(con2)
