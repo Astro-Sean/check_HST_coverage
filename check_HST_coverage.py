@@ -424,7 +424,7 @@ def plot_hst_images(image_files, output_file="hst_mosaic.png", target_ra=None, t
             
             # Inset axes in top-right corner: 5 arcsec wide (2.5 arcsec radius) cutout
             from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-            ax2 = inset_axes(ax1, width='25%', height='25%', loc='upper right', borderpad=1.0)
+            ax2 = inset_axes(ax1, width='25%', height='25%', loc='upper right', borderpad=5.0)
             if target_ra is not None and target_dec is not None and target_in_bounds:
                 # Convert 2.5 arcsec radius to degrees (gives 5 arcsec wide cutout)
                 cutout_radius_deg = 2.5 / 3600.0
