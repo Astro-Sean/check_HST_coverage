@@ -199,9 +199,9 @@ Check for pre-explosion HST imaging of supernovae:
 python3 check_HST_coverage.py --tns "SN 2023A" --download --plot --max-images 5
 ```
 
-### 2. Variable Star Studies
+### 2. Variable SOURCES
 
-Monitor variable stars with multi-epoch HST data:
+Monitor variable sources with multi-epoch HST data i.e. multiple images:
 
 ```bash
 python3 check_HST_coverage.py --tns "2016jbu" --download --plot --file-type flt --max-images 10
@@ -240,40 +240,3 @@ pip install astroscrappy
 python3 check_HST_coverage.py --tns "2016jbu" --download --plot --file-type flt --clean-cosmic-rays
 ```
 
-**Note**: DRZ files are already drizzled science images that have had cosmic rays removed during processing, so cosmic ray cleaning is not needed for DRZ files.
-
-The tool automatically reads the FITS header to determine optimal parameters:
-- **GAIN**: From header (electrons/ADU)
-- **READNOISE**: From header (electrons)
-- **EXPTIME**: From header (seconds)
-
-This ensures the cosmic ray cleaning is tailored to the specific HST instrument and exposure settings.
-
-## Troubleshooting
-
-### No Images Found
-- Increase search radius: `--radius 0.5`
-- Check if the object name resolves correctly
-- Verify coordinates are in decimal degrees
-
-### Download Issues
-- The MAST database may require authentication for some proprietary data
-- Some observations may not have science products available
-
-### Plot Generation
-- If plots fail, ensure matplotlib and astropy are properly installed
-- Check that the FITS file has valid WCS header information
-
-## License
-
-MIT License
-
-## Author
-
-Sean Brennan (@Astro-Sean)
-
-## Acknowledgments
-
-- This tool uses the [astroquery](https://astroquery.readthedocs.io/) library to query MAST
-- Drizzled images processed using [AstroDrizzle](https://www.stsci.edu/scientific-community/software/astrodrizzle.html)
-- ZScale implementation from [astropy.visualization](https://docs.astropy.org/en/stable/visualization/index.html)
